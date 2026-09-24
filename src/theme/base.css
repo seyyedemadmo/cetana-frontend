@@ -1,0 +1,62 @@
+:root {
+  --el-color-primary: #15803d;
+  --el-color-primary-light-3: #3d9d63;
+  --el-color-primary-light-5: #79bd93;
+  --el-color-primary-light-7: #b3d8c0;
+  --el-color-primary-light-8: #d0e7da;
+  --el-color-primary-light-9: #eaf5ee;
+  --el-color-primary-dark-2: #0f6630;
+
+  --cetana-accent: #d9a441;
+  --cetana-bg: #faf6ee;
+  --cetana-surface: #ffffff;
+  --cetana-ink: #18261d;
+}
+
+html.dark {
+  --cetana-bg: #0f1720;
+  --cetana-surface: #1b2733;
+  --cetana-ink: #e7edf3;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--cetana-bg);
+  color: var(--cetana-ink);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.page {
+  padding: 20px 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--cetana-ink);
+}
