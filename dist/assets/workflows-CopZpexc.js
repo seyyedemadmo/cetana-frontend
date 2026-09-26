@@ -1,1 +1,0 @@
-import{B as o}from"./index-8o9WW05R.js";const e=()=>o.get("/workflows/").then(s=>s.data),l=s=>o.get(`/workflows/${s}/`).then(t=>t.data),r=s=>o.post(`/workflows/${s}/publish/`).then(t=>t.data),w=s=>o.get("/workflows/steps/",{params:{version:s}}).then(t=>t.data);export{e as a,l as g,w as l,r as p};

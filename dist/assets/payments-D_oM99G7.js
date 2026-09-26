@@ -1,1 +1,0 @@
-import{B as e}from"./index-8o9WW05R.js";const n=(t={})=>e.get("/payments/",{params:t}).then(a=>a.data),m=t=>e.post("/payments/",t).then(a=>a.data),o=t=>e.post(`/payments/${t}/verify/`).then(a=>a.data);export{m as c,n as l,o as v};

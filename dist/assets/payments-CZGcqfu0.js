@@ -1,0 +1,1 @@
+import{B as e}from"./index-Cmx8ep4v.js";const n=(t={})=>e.get("/payments/",{params:t}).then(a=>a.data),m=t=>e.post("/payments/",t).then(a=>a.data),o=t=>e.post(`/payments/${t}/verify/`).then(a=>a.data);export{m as c,n as l,o as v};
