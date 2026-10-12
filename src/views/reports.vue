@@ -1,52 +1,34 @@
 <template>
   <div class="page">
-    <div class="page-header"><h2>{{ t('nav.reports') }}</h2></div>
+    <div class="page-header">
+      <h2>{{ t('nav.reports') }}</h2>
+      <el-button type="primary" @click="genDialog = true"><el-icon><Plus /></el-icon>&nbsp;{{ t('reports.generateReport') }}</el-button>
+    </div>
 
-    <el-tabs>
-      <el-tab-pane label="Report definitions">
-        <el-table :data="definitions" v-loading="loading" stripe>
-          <el-table-column prop="name" label="Name" min-width="200" />
-          <el-table-column prop="active" label="Active" width="100">
-            <template #default="{ row }"><el-tag :type="row.active ? 'success' : 'info'">{{ row.active }}</el-tag></template>
-          </el-table-column>
-          <el-table-column label="Fields" min-width="300">
-            <template #default="{ row }">
-              <el-tag v-for="f in row.fields" :key="f.key" size="small" style="margin-inline-end: 6px">{{ f.label }}</el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-tab-pane>
+    <el-alert type="info" :closable="false" class="help-banner" show-icon>
+      <template #title>
+        <span class="help-text">{{ t('help.reports') }}</span>
+      </template>
+    </el-alert>
 
-      <el-tab-pane label="Final reports">
-        <div style="margin-bottom: 12px; display: flex; justify-content: flex-end">
-          <el-button type="primary" @click="genDialog = true"><el-icon><Plus /></el-icon>&nbsp;Generate report</el-button>
-        </div>
-        <el-table :data="finalReports" v-loading="loading" stripe>
-          <el-table-column label="Order" width="200">
-            <template #default="{ row }">{{ row.data?.order_number || row.order }}</template>
-          </el-table-column>
-          <el-table-column label="Net weight" width="120">
-            <template #default="{ row }">{{ row.data?.net_weight_kg || '—' }}</template>
-          </el-table-column>
-          <el-table-column label="Total" width="180">
-            <template #default="{ row }">{{ row.data?.price?.total ? `${row.data.price.total} ${row.data.price.currency}` : '—' }}</template>
-          </el-table-column>
-          <el-table-column label="Actions" align="right" width="120">
-            <template #default="{ row }">
-              <el-button size="small" type="success" plain @click="downloadPdf(row)">PDF</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-tab-pane>
-    </el-tabs>
+    <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
+    <el-table :data="rows" v-loading="loading" stripe v-else>
+      <el-table-column prop="order_number" label="Order" width="180" />
+      <el-table-column prop="status" :label="t('common.status')" width="140" />
+      <el-table-column :label="t('common.actions')" width="140" align="right">
+        <template #default="{ row }">
+          <el-button size="small" type="success" plain @click="downloadPdf(row)">{{ t('btn.pdf') }}</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
 
-    <el-dialog v-model="genDialog" title="Generate report" width="460px">
-      <el-select v-model="genOrder" filterable placeholder="Select an order" style="width: 100%">
-        <el-option v-for="o in orders" :key="o.id" :label="o.order_number" :value="o.id" />
+    <el-dialog v-model="genDialog" :title="t('reports.generateReport')" width="460px">
+      <el-select v-model="genOrder" filterable :placeholder="t('reports.selectOrder')" style="width: 100%">
+        <el-option v-for="o in orders" :key="o.id" :label="`${o.order_number} · ${o.status}`" :value="o.id" />
       </el-select>
       <template #footer>
-        <el-button @click="genDialog = false">Cancel</el-button>
-        <el-button type="primary" :disabled="!genOrder" @click="generate">Generate</el-button>
+        <el-button @click="genDialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :disabled="!genOrder" @click="generate">{{ t('common.generate') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -56,25 +38,25 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { downloadReportPdf, generateReport, listFinalReports } from '../api/reports'
 import { listOrders } from '../api/orders'
-import { downloadReportPdf, generateReport, listFinalReports, listReportDefinitions } from '../api/reports'
 
 const { t } = useI18n()
-const definitions = ref([])
-const finalReports = ref([])
+const rows = ref([])
 const orders = ref([])
 const loading = ref(false)
 const genDialog = ref(false)
 const genOrder = ref(null)
 
+const errMsg = (e) => e.response?.data?.error?.message || 'Operation failed'
+
 async function load() {
   loading.value = true
   try {
-    definitions.value = (await listReportDefinitions()).results || []
-    finalReports.value = (await listFinalReports()).results || []
+    const data = await listFinalReports()
+    rows.value = data.results || []
   } catch (e) {
-    definitions.value = []
-    finalReports.value = []
+    rows.value = []
   } finally {
     loading.value = false
   }
@@ -82,7 +64,8 @@ async function load() {
 
 async function loadOrders() {
   try {
-    orders.value = (await listOrders()).results || []
+    const data = await listOrders()
+    orders.value = data.results || []
   } catch (e) {
     orders.value = []
   }
@@ -91,12 +74,12 @@ async function loadOrders() {
 async function generate() {
   try {
     await generateReport(genOrder.value)
-    ElMessage.success('Report generated')
+    ElMessage.success(t('reports.generateReport'))
     genDialog.value = false
     genOrder.value = null
     load()
   } catch (e) {
-    ElMessage.error(e.response?.data?.error?.message || 'Generation failed')
+    ElMessage.error(errMsg(e))
   }
 }
 
@@ -106,11 +89,11 @@ async function downloadPdf(row) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${row.data?.order_number || 'report'}.pdf`
+    a.download = `report-${row.order_number}.pdf`
     a.click()
     URL.revokeObjectURL(url)
   } catch (e) {
-    ElMessage.error('PDF download failed')
+    ElMessage.error(errMsg(e))
   }
 }
 
@@ -119,3 +102,17 @@ onMounted(() => {
   loadOrders()
 })
 </script>
+
+<style scoped>
+.help-banner {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-color-info-light-9));
+  border: 1px solid var(--el-color-primary-light-7);
+}
+.help-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--el-color-primary-dark-2);
+}
+</style>

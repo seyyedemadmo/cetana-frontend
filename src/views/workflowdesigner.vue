@@ -1,13 +1,25 @@
 <template>
   <div class="designer">
     <div class="toolbar">
-      <el-button @click="$router.push('/workflows')">Back</el-button>
+      <el-button @click="$router.push('/workflows')">{{ t('common.back') }}</el-button>
       <el-button v-if="auth.hasPerm('workflow.update')" type="primary" @click="dialog = true">
-        <el-icon><Plus /></el-icon>&nbsp;Add step
+        <el-icon><Plus /></el-icon>&nbsp;{{ t('workflows.addStep') }}
       </el-button>
-      <el-button v-if="auth.hasPerm('workflow.publish')" type="success" @click="publish">Publish</el-button>
-      <span class="hint">Drag nodes to arrange · drag from a node's bottom dot to another node to create a transition · Delete key removes a node</span>
+      <el-button v-if="auth.hasPerm('workflow.publish')" type="success" @click="publish">{{ t('btn.publish') }}</el-button>
+      <span class="hint">{{ t('workflows.designerHint') }}</span>
     </div>
+
+    <el-alert type="info" :closable="false" class="help-banner" show-icon>
+      <template #title>
+        <span class="help-text">{{ t('help.workflowDesigner') }}</span>
+      </template>
+    </el-alert>
+
+    <el-alert v-if="viewingActive" type="warning" :closable="true" class="help-banner" show-icon @close="viewingActive = false">
+      <template #title>
+        <span class="help-text">{{ t('workflows.viewingActive') }}</span>
+      </template>
+    </el-alert>
 
     <div class="canvas">
       <VueFlow
@@ -16,6 +28,7 @@
         :default-viewport="{ zoom: 1 }"
         fit-view-on-init
         :delete-key-code="['Backspace', 'Delete']"
+        :connection-mode="ConnectionMode.Strict"
         @connect="onConnect"
         @node-drag-stop="onNodeDragStop"
         @nodes-delete="onNodesDelete"
@@ -26,30 +39,30 @@
           <div class="wf-node" :class="props.data.kind">
             <div class="wf-node-name">{{ props.data.label }}</div>
             <div class="wf-node-key">{{ props.data.key }}</div>
-            <Handle type="target" :position="Position.Top" />
-            <Handle type="source" :position="Position.Bottom" />
+            <Handle type="target" :position="Position.Top" :id="`${props.id}-target`" :connectable="true" />
+            <Handle type="source" :position="Position.Bottom" :id="`${props.id}-source`" :connectable="true" />
           </div>
         </template>
       </VueFlow>
     </div>
 
-    <el-dialog v-model="dialog" title="Add step" width="460px">
+    <el-dialog v-model="dialog" :title="t('workflows.addStep')" width="460px">
       <el-form label-position="top">
         <el-form-item label="Key">
-          <el-input v-model="form.key" placeholder="e.g. washing" />
+          <el-input v-model="form.key" :placeholder="t('workflows.stepKeyPlaceholder')" />
         </el-form-item>
         <el-form-item label="Name">
-          <el-input v-model="form.name" placeholder="e.g. Washing" />
+          <el-input v-model="form.name" :placeholder="t('workflows.stepNamePlaceholder')" />
         </el-form-item>
         <el-form-item>
-          <el-checkbox v-model="form.required">Required</el-checkbox>
-          <el-checkbox v-model="form.is_start" style="margin-inline-start: 16px">Start step</el-checkbox>
-          <el-checkbox v-model="form.is_terminal" style="margin-inline-start: 16px">Terminal step</el-checkbox>
+          <el-checkbox v-model="form.required">{{ t('workflows.required') }}</el-checkbox>
+          <el-checkbox v-model="form.is_start" style="margin-inline-start: 16px">{{ t('workflows.startStep') }}</el-checkbox>
+          <el-checkbox v-model="form.is_terminal" style="margin-inline-start: 16px">{{ t('workflows.terminalStep') }}</el-checkbox>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialog = false">Cancel</el-button>
-        <el-button type="primary" @click="addStep">Add</el-button>
+        <el-button @click="dialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="addStep">{{ t('common.add') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -59,20 +72,23 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Handle, Position, VueFlow } from '@vue-flow/core'
+import { Handle, Position, VueFlow, ConnectionMode } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../store/auth'
 import { getWorkflow, publishWorkflow } from '../api/workflows'
 import client from '../api/client'
 
+const { t } = useI18n()
 const route = useRoute()
 const auth = useAuthStore()
 
 const workflow = ref(null)
 const versionId = ref(null)
+const viewingActive = ref(false)
 const nodes = ref([])
 const edges = ref([])
 const dialog = ref(false)
@@ -88,21 +104,103 @@ function kindOf(step) {
 }
 
 async function load() {
-  workflow.value = await getWorkflow(route.params.id)
-
-  const { data: versions } = await client.get('/workflows/versions/', {
-    params: { workflow: route.params.id, page_size: 100 }
-  })
-  let draft = (versions.results || []).find((v) => v.status === 'draft')
-  if (!draft) {
-    const maxVersion = Math.max(0, ...(versions.results || []).map((v) => v.version))
-    const { data: created } = await client.post('/workflows/versions/', {
-      workflow: route.params.id, version: maxVersion + 1, status: 'draft'
-    })
-    draft = created
+  try {
+    workflow.value = await getWorkflow(route.params.id)
+  } catch (e) {
+    ElMessage.error('Failed to load workflow: ' + errMsg(e))
+    return
   }
-  versionId.value = draft.id
-  await loadGraph(draft.id)
+
+  try {
+    const { data: versions } = await client.get('/workflows/versions/', {
+      params: { workflow: route.params.id, page_size: 100 }
+    })
+
+    let draft = (versions.results || []).find((v) => v.status === 'draft')
+
+    if (!draft) {
+      const active = (versions.results || []).find((v) => v.status === 'active')
+      if (active) {
+        const maxVersion = Math.max(0, ...(versions.results || []).map((v) => v.version))
+        const { data: created } = await client.post('/workflows/versions/', {
+          workflow: route.params.id, version: maxVersion + 1, status: 'draft'
+        })
+        draft = created
+        try {
+          await copyVersion(active.id, draft.id)
+          viewingActive.value = true
+          ElMessage.info('Created a new draft from the active version')
+        } catch (copyErr) {
+          ElMessage.warning('Created empty draft (copy failed: ' + errMsg(copyErr) + ')')
+        }
+      } else {
+        const maxVersion = Math.max(0, ...(versions.results || []).map((v) => v.version))
+        const { data: created } = await client.post('/workflows/versions/', {
+          workflow: route.params.id, version: maxVersion + 1, status: 'draft'
+        })
+        draft = created
+        ElMessage.info('Created a new empty draft')
+      }
+    }
+
+    versionId.value = draft.id
+    await loadGraph(draft.id)
+  } catch (e) {
+    ElMessage.error('Failed to load versions: ' + errMsg(e))
+  }
+}
+
+async function copyVersion(sourceVid, targetVid) {
+  const [{ data: stepsData }, { data: transData }] = await Promise.all([
+    client.get('/workflows/steps/', { params: { version: sourceVid, page_size: 500 } }),
+    client.get('/workflows/transitions/', { params: { version: sourceVid, page_size: 500 } })
+  ])
+
+  const steps = stepsData.results || []
+  const oldToNew = {}
+
+  for (const s of steps) {
+    const { data: newStep } = await client.post('/workflows/steps/', {
+      version: targetVid,
+      key: s.key,
+      name: s.name,
+      description: s.description,
+      order: s.order,
+      step_type: s.step_type,
+      required: s.required,
+      enabled: s.enabled,
+      estimated_duration_minutes: s.estimated_duration_minutes,
+      is_start: s.is_start,
+      is_terminal: s.is_terminal,
+      requires_customer_confirmation: s.requires_customer_confirmation,
+      requires_payment: s.requires_payment,
+      triggers_invoice: s.triggers_invoice,
+      triggers_odoo_sync: s.triggers_odoo_sync,
+      customer_visible: s.customer_visible,
+      operator_visible: s.operator_visible,
+      live_monitoring_enabled: s.live_monitoring_enabled,
+      input_schema: s.input_schema,
+      output_schema: s.output_schema,
+      availability_condition: s.availability_condition,
+      position_x: s.position_x,
+      position_y: s.position_y,
+    })
+    oldToNew[s.id] = newStep.id
+  }
+
+  const transitions = transData.results || []
+  for (const tr of transitions) {
+    const fromId = oldToNew[tr.from_step]
+    const toId = oldToNew[tr.to_step]
+    if (fromId && toId) {
+      await client.post('/workflows/transitions/', {
+        version: targetVid,
+        from_step: fromId,
+        to_step: toId,
+        conditions: tr.conditions,
+      })
+    }
+  }
 }
 
 async function loadGraph(vid) {
@@ -146,7 +244,7 @@ async function addStep() {
     })
     dialog.value = false
     Object.assign(form, { key: '', name: '', required: false, is_start: false, is_terminal: false })
-    ElMessage.success('Step added')
+    ElMessage.success(t('workflows.addStep'))
   } catch (e) {
     ElMessage.error(errMsg(e))
   }
@@ -190,7 +288,7 @@ async function onNodesDelete(deleted) {
 async function publish() {
   try {
     await publishWorkflow(route.params.id)
-    ElMessage.success('Workflow published')
+    ElMessage.success(t('workflows.publish'))
     load()
   } catch (e) {
     ElMessage.error(errMsg(e))
@@ -205,6 +303,19 @@ onMounted(load)
 .toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--el-border-color-light); flex-wrap: wrap; }
 .hint { color: var(--el-text-color-secondary); font-size: 12.5px; margin-inline-start: auto; }
 .canvas { flex: 1; min-height: 480px; }
+
+.help-banner {
+  margin: 12px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-color-info-light-9));
+  border: 1px solid var(--el-color-primary-light-7);
+  width: calc(100% - 32px);
+}
+.help-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--el-color-primary-dark-2);
+}
 
 .wf-node {
   padding: 8px 12px;

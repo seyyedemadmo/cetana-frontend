@@ -2,51 +2,57 @@
   <div class="page">
     <div class="page-header">
       <h2>{{ t('nav.users') }}</h2>
-      <el-button type="primary" @click="openCreate"><el-icon><Plus /></el-icon>&nbsp;New user</el-button>
+      <el-button type="primary" @click="openCreate"><el-icon><Plus /></el-icon>&nbsp;{{ t('users.newUser') }}</el-button>
     </div>
 
+    <el-alert type="info" :closable="false" class="help-banner" show-icon>
+      <template #title>
+        <span class="help-text">{{ t('help.users') }}</span>
+      </template>
+    </el-alert>
+
     <el-table :data="rows" v-loading="loading" stripe>
-      <el-table-column prop="username" label="Username" min-width="140" />
-      <el-table-column prop="email" label="Email" min-width="180" />
-      <el-table-column prop="phone" label="Phone" width="140" />
-      <el-table-column label="Roles" min-width="200">
+      <el-table-column prop="username" :label="t('login.username')" min-width="140" />
+      <el-table-column prop="email" :label="t('common.email')" min-width="180" />
+      <el-table-column prop="phone" :label="t('common.phone')" width="140" />
+      <el-table-column :label="t('nav.roles')" min-width="200">
         <template #default="{ row }">
           <el-tag v-for="r in row.roles" :key="r.id" size="small" style="margin-inline-end: 6px">{{ r.name }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Status" width="110">
+      <el-table-column :label="t('common.status')" width="110">
         <template #default="{ row }">
-          <el-tag :type="row.is_active ? 'success' : 'danger'">{{ row.is_active ? 'Active' : 'Banned' }}</el-tag>
+          <el-tag :type="row.is_active ? 'success' : 'danger'">{{ row.is_active ? t('users.active') : t('users.banned') }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Actions" min-width="300" align="right">
+      <el-table-column :label="t('common.actions')" min-width="300" align="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openEdit(row)">Edit</el-button>
+          <el-button size="small" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
           <el-button size="small" :type="row.is_active ? 'warning' : 'success'" plain @click="toggleActive(row)">
-            {{ row.is_active ? 'Ban' : 'Unban' }}
+            {{ row.is_active ? t('users.ban') : t('users.unban') }}
           </el-button>
-          <el-button size="small" @click="openPassword(row)">Password</el-button>
-          <el-button size="small" type="danger" plain @click="remove(row)">Delete</el-button>
+          <el-button size="small" @click="openPassword(row)">{{ t('btn.password') }}</el-button>
+          <el-button size="small" type="danger" plain @click="remove(row)">{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialog" :title="editing ? 'Edit user' : 'New user'" width="520px">
+    <el-dialog v-model="dialog" :title="editing ? t('users.editUser') : t('users.newUser')" width="520px">
       <el-form label-position="top">
-        <el-form-item label="Username"><el-input v-model="form.username" :disabled="editing" /></el-form-item>
+        <el-form-item :label="t('login.username')"><el-input v-model="form.username" :disabled="editing" /></el-form-item>
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="First name"><el-input v-model="form.first_name" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="Last name"><el-input v-model="form.last_name" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="t('users.firstName')"><el-input v-model="form.first_name" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item :label="t('users.lastName')"><el-input v-model="form.last_name" /></el-form-item></el-col>
         </el-row>
-        <el-form-item label="Email"><el-input v-model="form.email" /></el-form-item>
-        <el-form-item label="Phone"><el-input v-model="form.phone" /></el-form-item>
-        <el-form-item v-if="!editing" label="Password"><el-input v-model="form.password" type="password" show-password /></el-form-item>
-        <el-form-item label="Roles">
+        <el-form-item :label="t('common.email')"><el-input v-model="form.email" /></el-form-item>
+        <el-form-item :label="t('common.phone')"><el-input v-model="form.phone" /></el-form-item>
+        <el-form-item v-if="!editing" :label="t('btn.password')"><el-input v-model="form.password" type="password" show-password /></el-form-item>
+        <el-form-item :label="t('nav.roles')">
           <el-select v-model="form.role_ids" multiple style="width: 100%">
             <el-option v-for="r in roles" :key="r.id" :label="r.name" :value="r.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="Active"><el-switch v-model="form.is_active" /></el-form-item>
+        <el-form-item :label="t('users.active')"><el-switch v-model="form.is_active" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialog = false">{{ t('common.cancel') }}</el-button>
@@ -54,11 +60,11 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="pwDialog" title="Reset password" width="420px">
-      <el-input v-model="newPassword" type="password" show-password placeholder="New password" />
+    <el-dialog v-model="pwDialog" :title="t('users.resetPassword')" width="420px">
+      <el-input v-model="newPassword" type="password" show-password :placeholder="t('users.newPassword')" />
       <template #footer>
         <el-button @click="pwDialog = false">{{ t('common.cancel') }}</el-button>
-        <el-button type="primary" :disabled="!newPassword" @click="doResetPassword">Set password</el-button>
+        <el-button type="primary" :disabled="!newPassword" @click="doResetPassword">{{ t('users.setPassword') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -148,7 +154,7 @@ async function save() {
     } else {
       await createUser({ ...payload, username: form.username, password: form.password || 'changeme123' })
     }
-    ElMessage.success('Saved')
+    ElMessage.success(t('users.saved'))
     dialog.value = false
     load()
   } catch (e) {
@@ -159,7 +165,7 @@ async function save() {
 async function toggleActive(row) {
   try {
     await updateUser(row.id, { is_active: !row.is_active })
-    ElMessage.success(row.is_active ? 'User banned' : 'User unbanned')
+    ElMessage.success(row.is_active ? t('users.userBanned') : t('users.userUnbanned'))
     load()
   } catch (e) {
     ElMessage.error(errMsg(e))
@@ -175,7 +181,7 @@ function openPassword(row) {
 async function doResetPassword() {
   try {
     await setUserPassword(pwUserId.value, newPassword.value)
-    ElMessage.success('Password set')
+    ElMessage.success(t('users.passwordSet'))
     pwDialog.value = false
   } catch (e) {
     ElMessage.error(errMsg(e))
@@ -184,9 +190,9 @@ async function doResetPassword() {
 
 async function remove(row) {
   try {
-    await ElMessageBox.confirm(`Delete user "${row.username}"?`, 'Confirm', { type: 'warning' })
+    await ElMessageBox.confirm(t('users.deleteConfirm', { name: row.username }), t('common.confirmAction'), { type: 'warning' })
     await deleteUser(row.id)
-    ElMessage.success('Deleted')
+    ElMessage.success(t('users.deleted'))
     load()
   } catch (e) {
     if (e !== 'cancel') ElMessage.error(errMsg(e))
@@ -198,3 +204,17 @@ onMounted(() => {
   loadRoles()
 })
 </script>
+
+<style scoped>
+.help-banner {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-color-info-light-9));
+  border: 1px solid var(--el-color-primary-light-7);
+}
+.help-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--el-color-primary-dark-2);
+}
+</style>

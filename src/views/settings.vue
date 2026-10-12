@@ -2,6 +2,12 @@
   <div class="page">
     <div class="page-header"><h2>{{ t('nav.settings') }}</h2></div>
 
+    <el-alert type="info" :closable="false" class="help-banner" show-icon>
+      <template #title>
+        <span class="help-text">{{ t('help.settings') }}</span>
+      </template>
+    </el-alert>
+
     <el-card v-for="(entries, category) in grouped" :key="category" style="margin-bottom: 16px">
       <template #header>{{ category }}</template>
       <el-form label-position="top">
@@ -17,7 +23,7 @@
                 v-model="form[entry.key]"
                 type="password"
                 show-password
-                placeholder="unchanged — leave blank to keep"
+                :placeholder="t('settings.unchangedPlaceholder')"
               />
               <el-input-number v-else-if="entry.type === 'number'" v-model="form[entry.key]" style="width: 100%" />
               <el-input v-else v-model="form[entry.key]" :placeholder="entry.placeholder || ''" />
@@ -28,7 +34,7 @@
     </el-card>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 12px; flex-wrap: wrap">
-      <el-button :loading="testing" @click="runTest">Test Odoo connection</el-button>
+      <el-button :loading="testing" @click="runTest">{{ t('settings.testOdooConnection') }}</el-button>
       <el-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</el-button>
     </div>
 
@@ -38,7 +44,7 @@
       :closable="false"
       style="margin-top: 12px"
       :title="testResult.ok
-        ? `Connected to Odoo ${testResult.version?.server_version || ''} (uid ${testResult.uid})`
+        ? t('settings.testResult', { version: testResult.version?.server_version || '' })
         : `Connection failed: ${testResult.error}`"
     />
   </div>
@@ -94,13 +100,13 @@ async function save() {
     for (const entry of schema.value) {
       const value = form[entry.key]
       if (entry.type === 'secret') {
-        if (value) payload[entry.key] = value // only send changed secrets
+        if (value) payload[entry.key] = value
       } else {
         payload[entry.key] = value
       }
     }
     await saveSettings(payload)
-    ElMessage.success('Settings saved')
+    ElMessage.success(t('common.save'))
     await load()
   } catch (e) {
     ElMessage.error(e.response?.data?.error?.message || 'Save failed')
@@ -111,3 +117,17 @@ async function save() {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.help-banner {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-color-info-light-9));
+  border: 1px solid var(--el-color-primary-light-7);
+}
+.help-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--el-color-primary-dark-2);
+}
+</style>

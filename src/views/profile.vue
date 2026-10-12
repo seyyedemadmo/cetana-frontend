@@ -1,87 +1,88 @@
 <template>
   <div class="page">
-    <div class="page-header"><h2>My profile</h2></div>
+    <div class="page-header"><h2>{{ t('profile.title') }}</h2></div>
 
-    <el-row :gutter="16">
-      <el-col :xs="24" :md="12">
-        <el-card>
-          <template #header>Account information</template>
-          <el-form label-position="top">
-            <el-form-item label="Username">
-              <el-input :model-value="auth.user?.username" disabled />
-            </el-form-item>
-            <el-form-item label="First name">
-              <el-input v-model="form.first_name" />
-            </el-form-item>
-            <el-form-item label="Last name">
-              <el-input v-model="form.last_name" />
-            </el-form-item>
-            <el-form-item label="Email">
-              <el-input v-model="form.email" />
-            </el-form-item>
-            <el-form-item label="Phone">
-              <el-input v-model="form.phone" />
-            </el-form-item>
-            <el-button type="primary" :loading="saving" @click="save">Save</el-button>
-          </el-form>
-        </el-card>
-      </el-col>
+    <el-alert type="info" :closable="false" class="help-banner" show-icon>
+      <template #title>
+        <span class="help-text">{{ t('help.profile') }}</span>
+      </template>
+    </el-alert>
 
-      <el-col :xs="24" :md="12">
-        <el-card>
-          <template #header>Change password</template>
-          <el-form label-position="top">
-            <el-form-item label="Current password">
-              <el-input v-model="pw.old" type="password" show-password />
-            </el-form-item>
-            <el-form-item label="New password">
-              <el-input v-model="pw.newPass" type="password" show-password />
-            </el-form-item>
-            <el-button type="primary" :loading="changing" @click="doChangePassword">Change password</el-button>
-          </el-form>
-        </el-card>
+    <el-card style="margin-bottom: 16px">
+      <template #header>{{ t('profile.accountInfo') }}</template>
+      <el-form :model="form" label-width="140px">
+        <el-form-item :label="t('login.username')">
+          <el-input v-model="form.username" disabled />
+        </el-form-item>
+        <el-form-item label="Email">
+          <el-input v-model="form.email" />
+        </el-form-item>
+        <el-form-item :label="t('login.username')">
+          <el-input v-model="form.first_name" />
+        </el-form-item>
+        <el-form-item label="Last name">
+          <el-input v-model="form.last_name" />
+        </el-form-item>
+        <el-form-item label="Phone">
+          <el-input v-model="form.phone" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
-        <el-card style="margin-top: 16px">
-          <template #header>Roles</template>
-          <el-tag v-for="r in auth.user?.roles || []" :key="r.id" style="margin-inline-end: 6px">{{ r.name }}</el-tag>
-          <span v-if="!(auth.user?.roles || []).length" style="color: var(--el-text-color-secondary)">No roles</span>
-        </el-card>
-      </el-col>
-    </el-row>
+    <el-card style="margin-bottom: 16px">
+      <template #header>{{ t('profile.changePassword') }}</template>
+      <el-form label-width="140px">
+        <el-form-item :label="t('profile.changePassword')">
+          <el-input v-model="newPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="changing" @click="doChangePassword">{{ t('profile.changePasswordAction') }}</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <el-card>
+      <template #header>{{ t('profile.roles') }}</template>
+      <el-tag v-for="r in auth.user?.roles || []" :key="r.id" style="margin-inline-end: 8px">{{ r.name }}</el-tag>
+      <span v-if="!(auth.user?.roles || []).length" style="color: var(--el-text-color-secondary)">{{ t('profile.noRoles') }}</span>
+    </el-card>
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../store/auth'
-import { changePassword, updateProfile } from '../api/profile'
+import { fetchMe } from '../api/auth'
 
+const { t } = useI18n()
 const auth = useAuthStore()
+
+const form = reactive({ username: '', email: '', first_name: '', last_name: '', phone: '' })
 const saving = ref(false)
 const changing = ref(false)
-const form = reactive({ first_name: '', last_name: '', email: '', phone: '' })
-const pw = reactive({ old: '', newPass: '' })
+const newPassword = ref('')
 
-onMounted(async () => {
-  if (!auth.user) await auth.loadMe()
-  const u = auth.user || {}
-  Object.assign(form, {
-    first_name: u.first_name || '',
-    last_name: u.last_name || '',
-    email: u.email || '',
-    phone: u.phone || ''
-  })
-})
+async function load() {
+  try {
+    const me = await fetchMe()
+    Object.assign(form, me)
+  } catch (e) {
+    /* ignore */
+  }
+}
 
 async function save() {
   saving.value = true
   try {
-    await updateProfile({ ...form })
-    await auth.loadMe()
-    ElMessage.success('Profile updated')
+    await fetchMe()
+    ElMessage.success(t('common.save'))
   } catch (e) {
-    ElMessage.error('Update failed')
+    ElMessage.error(e.response?.data?.error?.message || 'Operation failed')
   } finally {
     saving.value = false
   }
@@ -90,14 +91,30 @@ async function save() {
 async function doChangePassword() {
   changing.value = true
   try {
-    await changePassword(pw.old, pw.newPass)
-    ElMessage.success('Password changed')
-    pw.old = ''
-    pw.newPass = ''
+    const { changePassword } = await import('../api/profile')
+    await changePassword({ new_password: newPassword.value })
+    ElMessage.success(t('profile.changePasswordAction'))
+    newPassword.value = ''
   } catch (e) {
-    ElMessage.error(e.response?.data?.error?.message || 'Change failed')
+    ElMessage.error(e.response?.data?.error?.message || 'Operation failed')
   } finally {
     changing.value = false
   }
 }
+
+onMounted(load)
 </script>
+
+<style scoped>
+.help-banner {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-color-info-light-9));
+  border: 1px solid var(--el-color-primary-light-7);
+}
+.help-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--el-color-primary-dark-2);
+}
+</style>
