@@ -22,10 +22,10 @@
           </el-table-column>
           <el-table-column prop="customer_name" label="Customer" min-width="160" />
           <el-table-column :label="t('reservations.date')" width="120">
-            <template #default="{ row }">{{ row.slot?.date }}</template>
+            <template #default="{ row }">{{ fmtDate(row.slot?.date) || '—' }}</template>
           </el-table-column>
           <el-table-column :label="t('reservations.time')" width="150">
-            <template #default="{ row }">{{ row.slot?.start_time }} – {{ row.slot?.end_time }}</template>
+            <template #default="{ row }">{{ fmtTimeRange(row.slot?.start_time, row.slot?.end_time) }}</template>
           </el-table-column>
           <el-table-column prop="status" :label="t('common.status')" width="140">
             <template #default="{ row }"><el-tag :type="tagType(row.status)">{{ row.status }}</el-tag></template>
@@ -51,9 +51,11 @@
         </div>
         <el-table :data="slots" v-loading="loading" stripe>
           <el-table-column prop="facility_name" :label="t('monitoring.facility')" min-width="150" />
-          <el-table-column prop="date" :label="t('reservations.date')" width="130" />
+          <el-table-column :label="t('reservations.date')" width="130">
+            <template #default="{ row }">{{ fmtDate(row.date) || '—' }}</template>
+          </el-table-column>
           <el-table-column :label="t('reservations.time')" width="160">
-            <template #default="{ row }">{{ row.start_time }} – {{ row.end_time }}</template>
+            <template #default="{ row }">{{ fmtTimeRange(row.start_time, row.end_time) }}</template>
           </el-table-column>
           <el-table-column label="Booked / Capacity" width="160">
             <template #default="{ row }">{{ row.booked_count }} / {{ row.capacity }}</template>
@@ -73,13 +75,15 @@
         </div>
         <el-table :data="schedules" v-loading="loading" stripe>
           <el-table-column prop="facility_name" :label="t('monitoring.facility')" min-width="150" />
-          <el-table-column prop="date" :label="t('reservations.date')" width="130" />
+          <el-table-column :label="t('reservations.date')" width="130">
+            <template #default="{ row }">{{ fmtDate(row.date) || '—' }}</template>
+          </el-table-column>
           <el-table-column label="Open" width="100">
             <template #default="{ row }"><el-tag :type="row.is_open ? 'success' : 'danger'">{{ row.is_open ? 'Open' : 'Closed' }}</el-tag></template>
           </el-table-column>
           <el-table-column prop="capacity" label="Capacity" width="110" />
           <el-table-column label="Hours" width="170">
-            <template #default="{ row }">{{ row.start_time || '—' }} / {{ row.end_time || '—' }}</template>
+            <template #default="{ row }">{{ fmtTimeRange(row.start_time, row.end_time) }}</template>
           </el-table-column>
           <el-table-column :label="t('common.actions')" width="110" align="right">
             <template #default="{ row }">
@@ -101,7 +105,7 @@
             <el-option
               v-for="s in slots"
               :key="s.id"
-              :label="`${s.date} · ${s.start_time} (${s.capacity - s.booked_count} left)`"
+              :label="`${fmtDate(s.date)} · ${fmtTime(s.start_time)} (${s.capacity - s.booked_count} left)`"
               :value="s.id"
               :disabled="!s.available"
             />
@@ -139,7 +143,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="t('reservations.date')">
-          <el-date-picker v-model="genDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <JalaliDatePicker v-model="genDate" />
         </el-form-item>
         <el-alert type="info" :closable="false" :title="t('reservations.generateSlotsHint')" />
       </el-form>
@@ -158,7 +162,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="t('reservations.date')">
-          <el-date-picker v-model="schedForm.date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <JalaliDatePicker v-model="schedForm.date" />
         </el-form-item>
         <el-form-item label="Open">
           <el-switch v-model="schedForm.is_open" />
@@ -189,6 +193,8 @@ import {
   rejectReservation
 } from '../api/reservations'
 import { createPayment } from '../api/payments'
+import JalaliDatePicker from '../components/JalaliDatePicker.vue'
+import { formatJalaliDate as fmtDate, formatTime as fmtTime, formatTimeRange as fmtTimeRange } from '../utils/jalali'
 
 const { t } = useI18n()
 const auth = useAuthStore()

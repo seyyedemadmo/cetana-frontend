@@ -94,6 +94,29 @@ export default {
     processingOrders: 'Processing orders',
     pendingPayments: 'Pending payments'
   },
+  jalali: {
+    pickDate: 'Select date',
+    today: 'Today',
+    clear: 'Clear',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    previousYear: 'Previous year',
+    nextYear: 'Next year',
+    months: {
+      1: 'Farvardin',
+      2: 'Ordibehesht',
+      3: 'Khordad',
+      4: 'Tir',
+      5: 'Mordad',
+      6: 'Shahrivar',
+      7: 'Mehr',
+      8: 'Aban',
+      9: 'Azar',
+      10: 'Dey',
+      11: 'Bahman',
+      12: 'Esfand'
+    }
+  },
   login: {
     title: 'Sign in to Cetana',
     username: 'Username',

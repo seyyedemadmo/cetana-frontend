@@ -10,6 +10,7 @@ import router from './router'
 import { pinia } from './store'
 import en from './locales/en'
 import fa from './locales/fa'
+import * as jalali from './utils/jalali'
 import './theme/base.css'
 
 const i18n = createI18n({
@@ -28,5 +29,14 @@ app.use(i18n)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
+
+// Every date the API returns is Gregorian; expose the Jalali helpers globally so
+// any view can render `{{ $jDate(row.created_at) }}` without an import. Columns
+// that still bind a raw prop should switch to a template using these.
+app.config.globalProperties.$jDate = jalali.formatJalaliDate
+app.config.globalProperties.$jDateTime = jalali.formatJalaliDateTime
+app.config.globalProperties.$jTime = jalali.formatTime
+app.config.globalProperties.$jTimeRange = jalali.formatTimeRange
+app.config.globalProperties.$jRange = jalali.formatJalaliRange
 
 app.mount('#app')

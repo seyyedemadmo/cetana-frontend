@@ -35,7 +35,7 @@
     <!-- New order -->
     <el-dialog v-model="newDialog" :title="t('orders.newOrder')" width="480px">
       <el-select v-model="newReservation" :placeholder="t('orders.selectReservation')" style="width: 100%">
-        <el-option v-for="r in reservations" :key="r.id" :label="`${r.slot?.date} ${r.slot?.start_time} · ${r.status}`" :value="r.id" />
+        <el-option v-for="r in reservations" :key="r.id" :label="`${fmtDate(r.slot?.date)} ${fmtTime(r.slot?.start_time)} · ${r.status}`" :value="r.id" />
       </el-select>
       <template #footer>
         <el-button @click="newDialog = false">{{ t('common.cancel') }}</el-button>
@@ -81,6 +81,7 @@ import { useI18n } from 'vue-i18n'
 import { confirmOrder, createOrder, listOrders, selectSteps, weighOrder } from '../api/orders'
 import { listReservations } from '../api/reservations'
 import { listSteps } from '../api/workflows'
+import { formatJalaliDate as fmtDate, formatTime as fmtTime } from '../utils/jalali'
 
 const { t } = useI18n()
 const rows = ref([])
