@@ -23,6 +23,12 @@
       <el-table-column :label="t('common.total')" width="160">
         <template #default="{ row }">{{ row.price_snapshot?.total ? `${row.price_snapshot.total} ${row.currency}` : '—' }}</template>
       </el-table-column>
+      <el-table-column :label="t('common.created')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.created_at" mode="datetime" /></template>
+      </el-table-column>
+      <el-table-column :label="t('orders.confirmedAt')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.confirmed_at" mode="datetime" /></template>
+      </el-table-column>
       <el-table-column :label="t('common.actions')" min-width="280" align="right">
         <template #default="{ row }">
           <el-button size="small" @click="openWeigh(row)">{{ t('btn.weigh') }}</el-button>
@@ -35,7 +41,7 @@
     <!-- New order -->
     <el-dialog v-model="newDialog" :title="t('orders.newOrder')" width="480px">
       <el-select v-model="newReservation" :placeholder="t('orders.selectReservation')" style="width: 100%">
-        <el-option v-for="r in reservations" :key="r.id" :label="`${r.slot?.date} ${r.slot?.start_time} · ${r.status}`" :value="r.id" />
+        <el-option v-for="r in reservations" :key="r.id" :label="reservationLabel(r)" :value="r.id" />
       </el-select>
       <template #footer>
         <el-button @click="newDialog = false">{{ t('common.cancel') }}</el-button>
@@ -81,11 +87,16 @@ import { useI18n } from 'vue-i18n'
 import { confirmOrder, createOrder, listOrders, selectSteps, weighOrder } from '../api/orders'
 import { listReservations } from '../api/reservations'
 import { listSteps } from '../api/workflows'
+import { formatJalaliDate, formatJalaliTime } from '../utils/jalali'
 
 const { t } = useI18n()
 const rows = ref([])
 const reservations = ref([])
 const loading = ref(false)
+
+function reservationLabel(r) {
+  return `${formatJalaliDate(r.slot?.date)} ${formatJalaliTime(r.slot?.start_time)} · ${r.status}`
+}
 
 const newDialog = ref(false)
 const newReservation = ref(null)

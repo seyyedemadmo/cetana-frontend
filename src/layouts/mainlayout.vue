@@ -45,6 +45,16 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          <el-tooltip content="راهنمای کاربر" placement="bottom">
+            <el-button text @click="router.push('/manual')">
+              <el-icon size="18"><QuestionFilled /></el-icon>
+            </el-button>
+          </el-tooltip>
+          <el-tooltip content="آموزش تعاملی" placement="bottom">
+            <el-button text @click="restartTour">
+              <el-icon size="18"><Compass /></el-icon>
+            </el-button>
+          </el-tooltip>
           <el-dropdown @command="onUserCommand">
             <span class="user-chip">
               <el-avatar :size="28">{{ initials }}</el-avatar>
@@ -53,6 +63,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">My profile</el-dropdown-item>
+                <el-dropdown-item command="manual">📖 راهنمای کاربر</el-dropdown-item>
                 <el-dropdown-item command="logout">{{ t('common.logout') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -65,6 +76,8 @@
       </el-main>
     </el-container>
   </el-container>
+
+  <OnboardingTour ref="tourRef" />
 </template>
 
 <script setup>
@@ -73,12 +86,19 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../store/auth'
 import { useThemeStore } from '../store/theme'
+import OnboardingTour from '../components/OnboardingTour.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const theme = useThemeStore()
 const collapsed = ref(false)
+const tourRef = ref(null)
+
+function restartTour() {
+  localStorage.removeItem('cetana.tour.done')
+  tourRef.value?.open()
+}
 
 const items = [
   { path: '/dashboard', icon: 'Odometer', label: 'nav.dashboard' },
@@ -92,7 +112,8 @@ const items = [
   { path: '/payments', icon: 'Wallet', label: 'nav.payments' },
   { path: '/invoices', icon: 'Document', label: 'nav.invoices' },
   { path: '/monitoring', icon: 'VideoCamera', label: 'nav.monitoring' },
-  { path: '/settings', icon: 'Setting', label: 'nav.settings', permissions: ['settings.manage'] }
+  { path: '/settings', icon: 'Setting', label: 'nav.settings', permissions: ['settings.manage'] },
+  { path: '/manual', icon: 'QuestionFilled', label: 'nav.manual' }
 ]
 
 const visibleItems = computed(() =>
@@ -117,6 +138,8 @@ function onUserCommand(cmd) {
     router.push('/login')
   } else if (cmd === 'profile') {
     router.push('/profile')
+  } else if (cmd === 'manual') {
+    router.push('/manual')
   }
 }
 

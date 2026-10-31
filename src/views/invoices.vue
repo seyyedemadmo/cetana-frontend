@@ -19,6 +19,12 @@
       <el-table-column prop="sync_state" label="Sync state" width="150">
         <template #default="{ row }"><el-tag :type="row.sync_state === 'synchronized' ? 'success' : 'info'">{{ row.sync_state }}</el-tag></template>
       </el-table-column>
+      <el-table-column :label="t('common.created')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.created_at" mode="datetime" /></template>
+      </el-table-column>
+      <el-table-column :label="t('invoices.syncedAt')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.synced_at" mode="datetime" /></template>
+      </el-table-column>
       <el-table-column prop="odoo_invoice_id" label="Odoo ID" min-width="160">
         <template #default="{ row }">{{ row.odoo_invoice_id || '—' }}</template>
       </el-table-column>

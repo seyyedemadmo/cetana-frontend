@@ -27,7 +27,8 @@ const routes = [
       { path: 'invoices', name: 'invoices', component: () => import('../views/Invoices.vue') },
       { path: 'monitoring', name: 'monitoring', component: () => import('../views/Monitoring.vue') },
       { path: 'settings', name: 'settings', component: () => import('../views/Settings.vue'), meta: { permissions: ['settings.manage'] } },
-      { path: 'profile', name: 'profile', component: () => import('../views/Profile.vue') }
+      { path: 'profile', name: 'profile', component: () => import('../views/Profile.vue') },
+      { path: 'manual', name: 'manual', component: () => import('../views/UserManual.vue') }
     ]
   },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFound.vue') }

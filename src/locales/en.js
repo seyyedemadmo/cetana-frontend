@@ -15,7 +15,8 @@ export default {
     payments: 'Payments',
     invoices: 'Invoices',
     monitoring: 'Monitoring',
-    settings: 'Settings'
+    settings: 'Settings',
+    manual: 'User Manual'
   },
   common: {
     logout: 'Log out',
@@ -48,7 +49,9 @@ export default {
     active: 'Active',
     banned: 'Banned',
     ban: 'Ban',
-    unban: 'Unban'
+    unban: 'Unban',
+    created: 'Created',
+    updated: 'Updated'
   },
   btn: {
     start: 'Start',
@@ -83,7 +86,7 @@ export default {
     profile: 'Manage your personal account settings. HOW IT WORKS: (1) Account Information: View and update your email, first name, last name, and phone number. Username cannot be changed (it\'s your login identity). (2) Change Password: Set a new password — you\'ll need to enter the new password and click Change Password to apply. (3) Roles: View the roles currently assigned to your account (e.g., Administrator, Facility Manager, Operator). Role assignments determine what panels and actions are available to you. Contact your admin if you need different permissions.',
     reports: 'Generate and download comprehensive processing reports for completed orders. HOW IT WORKS: (1) Generate: Select a confirmed order and click Generate — the system compiles a full report including order details, customer info, weights (gross/tare/net), selected processing steps, complete price breakdown, execution timeline (every step with operator, start/end times, attempt number), quality measurements from each step, payment records and invoice status. (2) Download PDF: Each report can be downloaded as a professionally formatted PDF with summary table, timeline, quality fields, pricing, and payment/invoice sections. (3) Reports are versioned — regenerating overwrites the previous version for the same order.',
     monitoring: 'Live camera feeds from your processing facility with secure, per-customer access control. HOW IT WORKS: (1) Cameras: Each card shows a camera assigned to a facility and processing line. Active cameras show live feeds; inactive ones are greyed out. (2) Stream Access: Click "Stream access" to request a short-lived, HMAC-signed token (valid 1 hour). The token is scoped to cameras linked to your own orders\' workflow steps — you can only see cameras authorized for your orders. (3) Authorized Stream: If access is granted, the video player loads the live feed. If denied, you\'ll see an access denied message. (4) Credentials are never exposed — all authentication happens server-side.',
-    settings: 'System-wide configuration panel for administrators. HOW IT WORKS: (1) Settings are grouped by category (e.g., Reservations, Odoo, Payment Gateway, SMS Provider). (2) Secret fields (passwords, API keys) show as password inputs — leave blank to keep the current value, enter a new value to change. (3) Changes take effect immediately after saving — no restart needed. (4) Test Odoo Connection: Validates that the configured Odoo server is reachable and credentials are correct. Shows the server version on success. (5) All settings are stored in the dynamic settings store and can be managed without redeploying the application.',
+    settings: 'System-wide configuration panel for administrators. HOW IT WORKS: (1) Settings are grouped by category (e.g., Reservations, Odoo, SMS, Live Monitoring). (2) Secret fields (passwords, API keys) show as password inputs — leave blank to keep the current value, enter a new value to change. (3) Changes take effect immediately after saving — no restart needed. (4) Test Odoo Connection: Validates that the configured Odoo server is reachable and credentials are correct. Shows the server version on success. (5) Live Monitoring: choose the default streaming protocol (RTSP, RTMP, HLS, DASH, WebRTC, MJPEG, HTTP, ONVIF, SRT); protocol-specific fields appear dynamically. Non-browser protocols need a media gateway URL. (6) All settings are stored in the dynamic settings store and can be managed without redeploying the application.',
     users: 'Manage system user accounts, roles and access control. HOW IT WORKS: (1) User List: Shows all registered users with their contact info, assigned roles and account status (Active/Banned). (2) Create User: Click "+ New user" — set username, email, phone, password and assign roles. (3) Edit User: Click Edit to modify user details and role assignments. Username cannot be changed after creation. (4) Ban/Unban: Temporarily disable or re-enable a user\'s access without deleting their data. (5) Reset Password: Click Password to set a new password for a user. (6) Delete: Permanently remove a user account (requires confirmation). Roles determine what each user can see and do across the system.',
     roles: 'Define access control roles and assign permissions. HOW IT WORKS: (1) Roles are named permission bundles (e.g., Administrator, Facility Manager, Operator, Customer). (2) Each role has a slug (unique identifier), display name and description. (3) Permissions are granular — each action (view, create, update, delete) on each resource has a permission code (e.g., reservation.view, processing.start). (4) Assign Permissions: Check which permissions each role should have. (5) Users are assigned roles via the Users panel — a user\'s effective permissions are the union of all permissions across all their assigned roles. (6) Superusers bypass all permission checks automatically.',
     notFound: 'The page you are looking for does not exist or has been moved. Click the button below to return to the dashboard.'
@@ -129,7 +132,8 @@ export default {
     recordWeighing: 'Record weighing',
     selectProcessingSteps: 'Select processing steps',
     create: 'Create',
-    orderConfirmed: 'Order confirmed'
+    orderConfirmed: 'Order confirmed',
+    confirmedAt: 'Confirmed'
   },
   processing: {
     title: 'Processing',
@@ -137,7 +141,9 @@ export default {
     pause: 'Pause',
     resume: 'Resume',
     complete: 'Complete',
-    reject: 'Reject'
+    reject: 'Reject',
+    startedAt: 'Started',
+    completedAt: 'Completed'
   },
   workflows: {
     title: 'Workflows',
@@ -159,13 +165,16 @@ export default {
     title: 'Invoices',
     newInvoice: 'New invoice',
     selectOrder: 'Select a confirmed order',
-    syncToOdoo: 'Sync to Odoo'
+    syncToOdoo: 'Sync to Odoo',
+    syncedAt: 'Synced'
   },
   payments: {
     title: 'Payments',
     newPayment: 'New payment',
     selectOrder: 'Select order',
-    verify: 'Verify'
+    verify: 'Verify',
+    requestTime: 'Requested',
+    verifiedAt: 'Verified'
   },
   profile: {
     title: 'My profile',
@@ -181,7 +190,8 @@ export default {
     generateReport: 'Generate report',
     selectOrder: 'Select an order',
     generate: 'Generate',
-    pdf: 'PDF'
+    pdf: 'PDF',
+    generatedAt: 'Generated'
   },
   monitoring: {
     title: 'Monitoring',
@@ -190,7 +200,10 @@ export default {
     line: 'Line',
     authorizedStream: 'Authorized stream',
     accessGranted: 'Access granted — short-lived token, scoped to your orders',
-    accessDenied: 'Access denied for this stream'
+    accessDenied: 'Access denied for this stream',
+    noCameras: 'No active cameras available',
+    player: 'Player',
+    protocolUnsupported: 'This protocol needs a media gateway. Configure one under Settings → Live Monitoring.'
   },
   settings: {
     title: 'Settings',

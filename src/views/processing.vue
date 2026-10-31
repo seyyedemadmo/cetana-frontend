@@ -20,6 +20,12 @@
         <template #default="{ row }"><el-tag :type="stateType(row.state)">{{ row.state }}</el-tag></template>
       </el-table-column>
       <el-table-column prop="attempt" label="Attempt" width="90" />
+      <el-table-column :label="t('processing.startedAt')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.started_at" mode="datetime" /></template>
+      </el-table-column>
+      <el-table-column :label="t('processing.completedAt')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.completed_at" mode="datetime" /></template>
+      </el-table-column>
       <el-table-column :label="t('common.actions')" min-width="300" align="right">
         <template #default="{ row }">
           <el-button v-if="canStart(row.state)" size="small" type="primary" @click="run(row, 'start')">{{ t('btn.start') }}</el-button>

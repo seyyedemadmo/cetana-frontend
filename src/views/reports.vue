@@ -15,6 +15,9 @@
     <el-table :data="rows" v-loading="loading" stripe v-else>
       <el-table-column prop="order_number" label="Order" width="180" />
       <el-table-column prop="status" :label="t('common.status')" width="140" />
+      <el-table-column :label="t('reports.generatedAt')" width="160">
+        <template #default="{ row }"><JalaliText :value="row.generated_at || row.created_at" mode="datetime" /></template>
+      </el-table-column>
       <el-table-column :label="t('common.actions')" width="140" align="right">
         <template #default="{ row }">
           <el-button size="small" type="success" plain @click="downloadPdf(row)">{{ t('btn.pdf') }}</el-button>

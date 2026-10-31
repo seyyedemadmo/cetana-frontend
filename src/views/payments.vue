@@ -20,6 +20,12 @@
       <el-table-column prop="status" :label="t('common.status')" width="130">
         <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
       </el-table-column>
+      <el-table-column :label="t('payments.requestTime')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.request_time || row.created_at" mode="datetime" /></template>
+      </el-table-column>
+      <el-table-column :label="t('payments.verifiedAt')" width="150">
+        <template #default="{ row }"><JalaliText :value="row.verification_time" mode="datetime" /></template>
+      </el-table-column>
       <el-table-column :label="t('common.actions')" width="120" align="right">
         <template #default="{ row }">
           <el-button size="small" :disabled="row.status === 'success'" @click="verify(row)">{{ t('btn.verify') }}</el-button>

@@ -15,8 +15,18 @@
           <el-col :xs="24" :sm="12" v-for="entry in entries" :key="entry.key">
             <el-form-item :label="entry.label">
               <el-switch v-if="entry.type === 'boolean'" v-model="form[entry.key]" />
-              <el-select v-else-if="entry.type === 'choice'" v-model="form[entry.key]" style="width: 100%">
-                <el-option v-for="o in entry.options" :key="o" :label="o" :value="o" />
+              <el-select
+                v-else-if="entry.type === 'choice'"
+                v-model="form[entry.key]"
+                style="width: 100%"
+                filterable
+              >
+                <el-option
+                  v-for="o in normalizeOptions(entry.options)"
+                  :key="o.value"
+                  :label="o.label"
+                  :value="o.value"
+                />
               </el-select>
               <el-input
                 v-else-if="entry.type === 'secret'"
@@ -63,6 +73,23 @@ const saving = ref(false)
 const testing = ref(false)
 const testResult = ref(null)
 
+function normalizeOptions(options = []) {
+  return options.map((o) =>
+    typeof o === 'object' && o !== null
+      ? { value: o.value, label: o.label || o.value }
+      : { value: o, label: o }
+  )
+}
+
+function isVisible(entry) {
+  const dep = entry.depends_on
+  if (!dep || typeof dep !== 'object') return true
+  return Object.entries(dep).every(([key, allowed]) => {
+    const current = form[key]
+    return Array.isArray(allowed) ? allowed.includes(current) : current === allowed
+  })
+}
+
 async function runTest() {
   testing.value = true
   testResult.value = null
@@ -78,6 +105,7 @@ async function runTest() {
 const grouped = computed(() => {
   const map = {}
   for (const entry of schema.value) {
+    if (!isVisible(entry)) continue
     if (!map[entry.category]) map[entry.category] = []
     map[entry.category].push(entry)
   }
