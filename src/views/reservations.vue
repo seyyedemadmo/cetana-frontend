@@ -25,9 +25,7 @@
             <template #default="{ row }"><JalaliText :value="row.slot?.date" /></template>
           </el-table-column>
           <el-table-column :label="t('reservations.time')" width="150">
-            <template #default="{ row }">
-              <JalaliText :value="row.slot?.start_time" mode="time" /> – <JalaliText :value="row.slot?.end_time" mode="time" />
-            </template>
+            <template #default="{ row }">{{ formatTimeRange(row.slot?.start_time, row.slot?.end_time) }}</template>
           </el-table-column>
           <el-table-column :label="t('common.created')" width="150">
             <template #default="{ row }"><JalaliText :value="row.created_at" mode="datetime" /></template>
@@ -60,9 +58,7 @@
             <template #default="{ row }"><JalaliText :value="row.date" /></template>
           </el-table-column>
           <el-table-column :label="t('reservations.time')" width="160">
-            <template #default="{ row }">
-              <JalaliText :value="row.start_time" mode="time" /> – <JalaliText :value="row.end_time" mode="time" />
-            </template>
+            <template #default="{ row }">{{ formatTimeRange(row.start_time, row.end_time) }}</template>
           </el-table-column>
           <el-table-column label="Booked / Capacity" width="160">
             <template #default="{ row }">{{ row.booked_count }} / {{ row.capacity }}</template>
@@ -90,12 +86,7 @@
           </el-table-column>
           <el-table-column prop="capacity" label="Capacity" width="110" />
           <el-table-column label="Hours" width="170">
-            <template #default="{ row }">
-              <template v-if="row.start_time || row.end_time">
-                <JalaliText :value="row.start_time" mode="time" /> / <JalaliText :value="row.end_time" mode="time" />
-              </template>
-              <template v-else>—</template>
-            </template>
+            <template #default="{ row }">{{ formatTimeRange(row.start_time, row.end_time) }}</template>
           </el-table-column>
           <el-table-column :label="t('common.actions')" width="110" align="right">
             <template #default="{ row }">
@@ -205,13 +196,13 @@ import {
   rejectReservation
 } from '../api/reservations'
 import { createPayment } from '../api/payments'
-import { formatJalaliDate, formatJalaliTime } from '../utils/jalali'
+import { formatJalaliDate, formatTime, formatTimeRange } from '../utils/jalali'
 
 const { t } = useI18n()
 const auth = useAuthStore()
 
 function slotLabel(s) {
-  return `${formatJalaliDate(s.date)} · ${formatJalaliTime(s.start_time)} (${s.capacity - s.booked_count} left)`
+  return `${formatJalaliDate(s.date) || '—'} · ${formatTime(s.start_time) || '—'} (${s.capacity - s.booked_count} left)`
 }
 
 const rows = ref([])

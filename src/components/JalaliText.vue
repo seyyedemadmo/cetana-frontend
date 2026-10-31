@@ -4,7 +4,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatJalaliDate, formatJalaliDateTime, formatJalaliTime } from '../utils/jalali'
+import { formatJalaliDate, formatJalaliDateTime, formatTime } from '../utils/jalali'
 
 const props = defineProps({
   value: { type: [String, Date, Number, null], default: null },
@@ -13,9 +13,11 @@ const props = defineProps({
 })
 
 const text = computed(() => {
-  if (props.mode === 'datetime') return formatJalaliDateTime(props.value)
-  if (props.mode === 'time') return formatJalaliTime(props.value)
-  return formatJalaliDate(props.value)
+  let out = ''
+  if (props.mode === 'datetime') out = formatJalaliDateTime(props.value)
+  else if (props.mode === 'time') out = formatTime(props.value)
+  else out = formatJalaliDate(props.value)
+  return out || '—'
 })
 </script>
 

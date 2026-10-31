@@ -87,7 +87,7 @@ import { useI18n } from 'vue-i18n'
 import { confirmOrder, createOrder, listOrders, selectSteps, weighOrder } from '../api/orders'
 import { listReservations } from '../api/reservations'
 import { listSteps } from '../api/workflows'
-import { formatJalaliDate, formatJalaliTime } from '../utils/jalali'
+import { formatJalaliDate, formatTime } from '../utils/jalali'
 
 const { t } = useI18n()
 const rows = ref([])
@@ -95,7 +95,7 @@ const reservations = ref([])
 const loading = ref(false)
 
 function reservationLabel(r) {
-  return `${formatJalaliDate(r.slot?.date)} ${formatJalaliTime(r.slot?.start_time)} · ${r.status}`
+  return `${formatJalaliDate(r.slot?.date) || '—'} ${formatTime(r.slot?.start_time) || '—'} · ${r.status}`
 }
 
 const newDialog = ref(false)
