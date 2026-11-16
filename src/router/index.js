@@ -15,18 +15,84 @@ const routes = [
     redirect: '/dashboard',
     children: [
       { path: 'dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue') },
-      { path: 'reservations', name: 'reservations', component: () => import('../views/Reservations.vue') },
-      { path: 'orders', name: 'orders', component: () => import('../views/Orders.vue') },
-      { path: 'processing', name: 'processing', component: () => import('../views/Processing.vue') },
-      { path: 'workflows', name: 'workflows', component: () => import('../views/Workflows.vue'), meta: { permissions: ['workflow.view'] } },
-      { path: 'workflows/:id', name: 'workflow-designer', component: () => import('../views/WorkflowDesigner.vue'), meta: { permissions: ['workflow.create', 'workflow.update'] } },
-      { path: 'users', name: 'users', component: () => import('../views/Users.vue'), meta: { permissions: ['user.view'] } },
-      { path: 'roles', name: 'roles', component: () => import('../views/Roles.vue'), meta: { permissions: ['role.view'] } },
-      { path: 'reports', name: 'reports', component: () => import('../views/Reports.vue') },
-      { path: 'payments', name: 'payments', component: () => import('../views/Payments.vue') },
-      { path: 'invoices', name: 'invoices', component: () => import('../views/Invoices.vue') },
-      { path: 'monitoring', name: 'monitoring', component: () => import('../views/Monitoring.vue') },
-      { path: 'settings', name: 'settings', component: () => import('../views/Settings.vue'), meta: { permissions: ['settings.manage'] } },
+      {
+        path: 'reservations',
+        name: 'reservations',
+        component: () => import('../views/Reservations.vue'),
+        meta: { permissions: ['reservation.view'] }
+      },
+      {
+        path: 'orders',
+        name: 'orders',
+        component: () => import('../views/Orders.vue'),
+        meta: { permissions: ['order.view', 'processing.view'] }
+      },
+      {
+        path: 'processing',
+        name: 'processing',
+        component: () => import('../views/Processing.vue'),
+        meta: { permissions: ['processing.view'] }
+      },
+      {
+        path: 'workflows',
+        name: 'workflows',
+        component: () => import('../views/Workflows.vue'),
+        meta: { permissions: ['workflow.view'] }
+      },
+      {
+        path: 'workflows/:id',
+        name: 'workflow-designer',
+        component: () => import('../views/WorkflowDesigner.vue'),
+        meta: { permissions: ['workflow.create', 'workflow.update'] }
+      },
+      {
+        path: 'pricing',
+        name: 'pricing',
+        component: () => import('../views/Pricing.vue'),
+        meta: { permissions: ['pricing.view', 'pricing.manage'] }
+      },
+      {
+        path: 'users',
+        name: 'users',
+        component: () => import('../views/Users.vue'),
+        meta: { permissions: ['user.view'] }
+      },
+      {
+        path: 'roles',
+        name: 'roles',
+        component: () => import('../views/Roles.vue'),
+        meta: { permissions: ['role.view'] }
+      },
+      {
+        path: 'reports',
+        name: 'reports',
+        component: () => import('../views/Reports.vue'),
+        meta: { permissions: ['report.view'] }
+      },
+      {
+        path: 'payments',
+        name: 'payments',
+        component: () => import('../views/Payments.vue'),
+        meta: { permissions: ['payment.view'] }
+      },
+      {
+        path: 'invoices',
+        name: 'invoices',
+        component: () => import('../views/Invoices.vue'),
+        meta: { permissions: ['invoice.view'] }
+      },
+      {
+        path: 'monitoring',
+        name: 'monitoring',
+        component: () => import('../views/Monitoring.vue'),
+        meta: { permissions: ['monitoring.view'] }
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('../views/Settings.vue'),
+        meta: { permissions: ['settings.manage'] }
+      },
       { path: 'profile', name: 'profile', component: () => import('../views/Profile.vue') },
       { path: 'manual', name: 'manual', component: () => import('../views/UserManual.vue') }
     ]

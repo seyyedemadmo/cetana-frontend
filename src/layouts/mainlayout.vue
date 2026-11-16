@@ -102,16 +102,17 @@ function restartTour() {
 
 const items = [
   { path: '/dashboard', icon: 'Odometer', label: 'nav.dashboard' },
-  { path: '/reservations', icon: 'Calendar', label: 'nav.reservations' },
-  { path: '/orders', icon: 'Tickets', label: 'nav.orders' },
-  { path: '/processing', icon: 'Cpu', label: 'nav.processing' },
-  { path: '/workflows', icon: 'Share', label: 'nav.workflows', permissions: ['workflow.view'] },
+  { path: '/reservations', icon: 'Calendar', label: 'nav.reservations', permissions: ['reservation.view'] },
+  { path: '/orders', icon: 'Tickets', label: 'nav.orders', permissions: ['order.view', 'processing.view'] },
+  { path: '/processing', icon: 'Cpu', label: 'nav.processing', permissions: ['processing.view'] },
+  { path: '/monitoring', icon: 'VideoCamera', label: 'nav.monitoring', permissions: ['monitoring.view'] },
+  { path: '/payments', icon: 'Wallet', label: 'nav.payments', permissions: ['payment.view'] },
+  { path: '/invoices', icon: 'Document', label: 'nav.invoices', permissions: ['invoice.view'] },
+  { path: '/reports', icon: 'DataAnalysis', label: 'nav.reports', permissions: ['report.view'] },
+  { path: '/pricing', icon: 'PriceTag', label: 'nav.pricing', permissions: ['pricing.view', 'pricing.manage'] },
   { path: '/users', icon: 'User', label: 'nav.users', permissions: ['user.view'] },
   { path: '/roles', icon: 'Avatar', label: 'nav.roles', permissions: ['role.view'] },
-  { path: '/reports', icon: 'DataAnalysis', label: 'nav.reports' },
-  { path: '/payments', icon: 'Wallet', label: 'nav.payments' },
-  { path: '/invoices', icon: 'Document', label: 'nav.invoices' },
-  { path: '/monitoring', icon: 'VideoCamera', label: 'nav.monitoring' },
+  { path: '/workflows', icon: 'Share', label: 'nav.workflows', permissions: ['workflow.view'] },
   { path: '/settings', icon: 'Setting', label: 'nav.settings', permissions: ['settings.manage'] },
   { path: '/manual', icon: 'QuestionFilled', label: 'nav.manual' }
 ]
@@ -131,6 +132,7 @@ function onLocale(cmd) {
   locale.value = cmd
   localStorage.setItem('cetana.locale', cmd)
   document.documentElement.lang = cmd === 'fa' ? 'fa' : 'en'
+  theme.syncWithLocale(cmd)
 }
 
 function onUserCommand(cmd) {
@@ -146,6 +148,7 @@ function onUserCommand(cmd) {
 
 onMounted(() => {
   theme.init()
+  theme.syncWithLocale(locale.value)
   if (!auth.user) auth.loadMe()
 })
 </script>

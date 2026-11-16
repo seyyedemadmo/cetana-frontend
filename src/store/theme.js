@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 export const useThemeStore = defineStore('theme', {
   state: () => ({
     theme: localStorage.getItem('cetana.theme') || 'light',
-    dir: localStorage.getItem('cetana.dir') || 'ltr'
+    dir: localStorage.getItem('cetana.dir') || 'rtl'
   }),
   actions: {
     init() {
@@ -19,6 +19,14 @@ export const useThemeStore = defineStore('theme', {
       this.dir = this.dir === 'ltr' ? 'rtl' : 'ltr'
       localStorage.setItem('cetana.dir', this.dir)
       this.applyDir()
+    },
+    setDir(dir) {
+      this.dir = dir === 'ltr' ? 'ltr' : 'rtl'
+      localStorage.setItem('cetana.dir', this.dir)
+      this.applyDir()
+    },
+    syncWithLocale(locale) {
+      this.setDir(locale === 'fa' ? 'rtl' : 'ltr')
     },
     applyTheme() {
       document.documentElement.classList.toggle('dark', this.theme === 'dark')

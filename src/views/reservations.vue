@@ -31,7 +31,7 @@
             <template #default="{ row }"><JalaliText :value="row.created_at" mode="datetime" /></template>
           </el-table-column>
           <el-table-column prop="status" :label="t('common.status')" width="140">
-            <template #default="{ row }"><el-tag :type="tagType(row.status)">{{ row.status }}</el-tag></template>
+            <template #default="{ row }"><el-tag :type="tagType(row.status)">{{ statusLabel(t, row.status) }}</el-tag></template>
           </el-table-column>
           <el-table-column :label="t('common.actions')" min-width="260" align="right">
             <template #default="{ row }">
@@ -47,9 +47,17 @@
 
       <!-- SLOTS -->
       <el-tab-pane :label="t('reservations.slots')">
-        <div style="margin-bottom: 12px; text-align: right">
+        <el-alert type="success" :closable="false" class="slot-auto-hint" show-icon style="margin-bottom: 12px">
+          <template #title>
+            <span>{{ t('reservations.autoSlotsHint') }}</span>
+          </template>
+        </el-alert>
+        <div style="margin-bottom: 12px; text-align: right; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap">
+          <el-button v-if="auth.hasPerm('slot.manage')" @click="doGenerateHorizon" :loading="horizonLoading">
+            {{ t('reservations.generateUpcoming') }}
+          </el-button>
           <el-button v-if="auth.hasPerm('slot.manage')" type="primary" @click="genDialog = true">
-            <el-icon><Calendar /></el-icon>&nbsp;{{ t('reservations.generateSlots') }}
+            <el-icon><Calendar /></el-icon>&nbsp;{{ t('reservations.generateOneDay') }}
           </el-button>
         </div>
         <el-table :data="slots" v-loading="loading" stripe>
@@ -64,7 +72,7 @@
             <template #default="{ row }">{{ row.booked_count }} / {{ row.capacity }}</template>
           </el-table-column>
           <el-table-column prop="blocked" :label="t('reservations.blocked')" width="100">
-            <template #default="{ row }"><el-tag :type="row.blocked ? 'danger' : 'info'">{{ row.blocked }}</el-tag></template>
+            <template #default="{ row }"><el-tag :type="row.blocked ? 'danger' : 'info'">{{ boolLabel(t, row.blocked) }}</el-tag></template>
           </el-table-column>
         </el-table>
       </el-tab-pane>
@@ -82,7 +90,7 @@
             <template #default="{ row }"><JalaliText :value="row.date" /></template>
           </el-table-column>
           <el-table-column :label="t('common.open')" width="100">
-            <template #default="{ row }"><el-tag :type="row.is_open ? 'success' : 'danger'">{{ row.is_open ? t('common.open') : t('common.closed') }}</el-tag></template>
+            <template #default="{ row }"><el-tag :type="row.is_open ? 'success' : 'danger'">{{ openLabel(t, row.is_open) }}</el-tag></template>
           </el-table-column>
           <el-table-column prop="capacity" :label="t('common.capacity')" width="110" />
           <el-table-column :label="t('common.hours')" width="170">
@@ -98,21 +106,34 @@
     </el-tabs>
 
     <!-- New reservation -->
-    <el-dialog v-model="newDialog" :title="t('reservations.newReservation')" width="480px">
+    <el-dialog v-model="newDialog" :title="t('reservations.newReservation')" width="480px" @closed="resetNewForm">
       <el-form label-position="top">
         <el-form-item :label="t('reservations.titleField')">
           <el-input v-model="form.title" :placeholder="t('reservations.titlePlaceholder')" />
         </el-form-item>
-        <el-form-item :label="t('reservations.selectSlot')">
-          <el-select v-model="form.slot" :placeholder="t('reservations.selectSlot')" style="width: 100%">
-            <el-option
-              v-for="s in slots"
-              :key="s.id"
-              :label="slotLabel(s)"
-              :value="s.id"
-              :disabled="!s.available"
+        <el-form-item :label="t('reservations.date')">
+          <JalaliDatePicker v-model="form.date" @update:modelValue="onBookDateChange" />
+        </el-form-item>
+        <el-form-item v-if="form.date" :label="t('reservations.time')">
+          <div v-loading="daySlotsLoading" class="time-grid">
+            <el-empty
+              v-if="!daySlotsLoading && !daySlots.length"
+              :description="t('reservations.noTimesThatDay')"
+              :image-size="64"
             />
-          </el-select>
+            <el-button
+              v-for="s in daySlots"
+              :key="s.id"
+              size="default"
+              :type="form.slot === s.id ? 'primary' : 'default'"
+              :disabled="!s.available"
+              class="time-chip"
+              @click="form.slot = s.id"
+            >
+              {{ formatTimeRange(s.start_time, s.end_time) }}
+              <span class="time-left">({{ Math.max(0, (s.capacity || 0) - (s.booked_count || 0)) }} {{ t('reservations.left') }})</span>
+            </el-button>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -192,27 +213,26 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../store/auth'
 import {
   approveReservation, cancelReservation, createReservation, createSchedule, deleteSchedule,
-  generateSlots, listFacilities, listReservations, listSchedules, listSlots,
+  generateSlotHorizon, generateSlots, listFacilities, listReservations, listSchedules, listSlots,
   rejectReservation
 } from '../api/reservations'
 import { createPayment } from '../api/payments'
-import { formatJalaliDate, formatTime, formatTimeRange } from '../utils/jalali'
+import { formatTimeRange } from '../utils/jalali'
+import { boolLabel, openLabel, statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const auth = useAuthStore()
 
-function slotLabel(s) {
-  return `${formatJalaliDate(s.date) || '—'} · ${formatTime(s.start_time) || '—'} (${s.capacity - s.booked_count} ${t('reservations.left')})`
-}
-
 const rows = ref([])
 const slots = ref([])
+const daySlots = ref([])
+const daySlotsLoading = ref(false)
 const facilities = ref([])
 const schedules = ref([])
 const loading = ref(false)
 
 const newDialog = ref(false)
-const form = reactive({ title: '', slot: null })
+const form = reactive({ title: '', date: '', slot: null })
 
 const payDialog = ref(false)
 const payAmount = ref(0)
@@ -221,6 +241,7 @@ const createdReservation = ref(null)
 const genDialog = ref(false)
 const genFacility = ref(null)
 const genDate = ref('')
+const horizonLoading = ref(false)
 
 const schedDialog = ref(false)
 const schedForm = reactive({ facility: null, date: '', is_open: true, capacity: 2, note: '' })
@@ -248,6 +269,32 @@ async function loadFacilities() {
   }
 }
 
+function resetNewForm() {
+  form.title = ''
+  form.date = ''
+  form.slot = null
+  daySlots.value = []
+}
+
+async function onBookDateChange(date) {
+  form.slot = null
+  daySlots.value = []
+  if (!date) return
+  daySlotsLoading.value = true
+  try {
+    const data = await listSlots({ date, blocked: false })
+    const list = data.results || data || []
+    daySlots.value = list
+      .filter((s) => s.available !== false)
+      .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')))
+  } catch (e) {
+    daySlots.value = []
+    ElMessage.error(errMsg(e))
+  } finally {
+    daySlotsLoading.value = false
+  }
+}
+
 async function create() {
   try {
     const reservation = await createReservation({ slot: form.slot, title: form.title })
@@ -256,8 +303,7 @@ async function create() {
     createdReservation.value = reservation
     payAmount.value = 0
     payDialog.value = true
-    form.title = ''
-    form.slot = null
+    resetNewForm()
     load()
   } catch (e) {
     ElMessage.error(errMsg(e))
@@ -316,6 +362,19 @@ async function doGenerate() {
   }
 }
 
+async function doGenerateHorizon() {
+  horizonLoading.value = true
+  try {
+    const result = await generateSlotHorizon()
+    ElMessage.success(t('reservations.horizonCreated', { count: result.created, days: result.days }))
+    load()
+  } catch (e) {
+    ElMessage.error(errMsg(e))
+  } finally {
+    horizonLoading.value = false
+  }
+}
+
 async function saveSchedule() {
   try {
     await createSchedule({ ...schedForm })
@@ -361,5 +420,19 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.6;
   color: var(--el-color-primary-dark-2);
+}
+.time-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+}
+.time-chip {
+  margin: 0;
+}
+.time-left {
+  margin-inline-start: 6px;
+  opacity: 0.75;
+  font-size: 12px;
 }
 </style>

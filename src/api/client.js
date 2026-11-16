@@ -8,7 +8,7 @@ client.interceptors.request.use((config) => {
   const token = localStorage.getItem('cetana.token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   // Drive backend-localized strings (settings schema labels, etc.).
-  const locale = localStorage.getItem('cetana.locale') || 'en'
+  const locale = localStorage.getItem('cetana.locale') || 'fa'
   config.headers['Accept-Language'] = locale
   config.headers['X-Locale'] = locale
   return config

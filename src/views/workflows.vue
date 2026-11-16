@@ -15,7 +15,7 @@
       <el-table-column prop="name" :label="t('common.name')" min-width="180" />
       <el-table-column prop="slug" :label="t('common.slug')" width="200" />
       <el-table-column prop="status" :label="t('common.status')" width="120">
-        <template #default="{ row }"><el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status }}</el-tag></template>
+        <template #default="{ row }"><el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ statusLabel(t, row.status) }}</el-tag></template>
       </el-table-column>
       <el-table-column :label="t('common.actions')" width="240" align="right">
         <template #default="{ row }">
@@ -33,6 +33,7 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../store/auth'
 import { listWorkflows, publishWorkflow } from '../api/workflows'
+import { statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const auth = useAuthStore()

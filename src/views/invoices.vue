@@ -17,7 +17,7 @@
       <el-table-column prop="amount" :label="t('common.amount')" width="150" />
       <el-table-column prop="currency" :label="t('common.currency')" width="100" />
       <el-table-column prop="sync_state" :label="t('invoices.syncState')" width="150">
-        <template #default="{ row }"><el-tag :type="row.sync_state === 'synchronized' ? 'success' : 'info'">{{ row.sync_state }}</el-tag></template>
+        <template #default="{ row }"><el-tag :type="row.sync_state === 'synchronized' ? 'success' : 'info'">{{ statusLabel(t, row.sync_state) }}</el-tag></template>
       </el-table-column>
       <el-table-column :label="t('common.created')" width="150">
         <template #default="{ row }"><JalaliText :value="row.created_at" mode="datetime" /></template>
@@ -53,6 +53,7 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createInvoice, listInvoices, syncInvoice } from '../api/invoices'
 import { listOrders } from '../api/orders'
+import { statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const rows = ref([])

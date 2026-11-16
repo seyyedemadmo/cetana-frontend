@@ -18,7 +18,7 @@
       <el-table-column prop="amount" :label="t('common.amount')" width="140" />
       <el-table-column prop="currency" :label="t('common.currency')" width="90" />
       <el-table-column prop="status" :label="t('common.status')" width="130">
-        <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
+        <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ statusLabel(t, row.status) }}</el-tag></template>
       </el-table-column>
       <el-table-column :label="t('payments.requestTime')" width="150">
         <template #default="{ row }"><JalaliText :value="row.request_time || row.created_at" mode="datetime" /></template>
@@ -58,6 +58,7 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createPayment, listPayments, verifyPayment } from '../api/payments'
 import { listOrders } from '../api/orders'
+import { statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const rows = ref([])

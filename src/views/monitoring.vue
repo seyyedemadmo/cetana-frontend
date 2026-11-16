@@ -2,9 +2,12 @@
   <div class="page">
     <div class="page-header">
       <h2>{{ t('nav.monitoring') }}</h2>
-      <el-button v-if="canSync" :loading="syncing" @click="sync">
-        <el-icon><Refresh /></el-icon>{{ t('monitoring.syncNvr') }}
-      </el-button>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <el-button v-if="canAssign" @click="openAssign">{{ t('monitoring.assignStages') }}</el-button>
+        <el-button v-if="canSync" :loading="syncing" @click="sync">
+          <el-icon><Refresh /></el-icon>{{ t('monitoring.syncNvr') }}
+        </el-button>
+      </div>
     </div>
 
     <el-alert type="info" :closable="false" class="help-banner" show-icon>
@@ -18,7 +21,7 @@
       <el-tag type="success" effect="plain">{{ t('monitoring.online') }}: {{ overview.online }}</el-tag>
       <el-tag type="danger" effect="plain">{{ t('monitoring.offline') }}: {{ overview.offline }}</el-tag>
       <span v-if="overview.device.machine_name || overview.device.model" class="overview-device">
-        NVR: {{ overview.device.machine_name || overview.device.model }}
+        {{ t('monitoring.nvr') }}: {{ overview.device.machine_name || overview.device.model }}
       </span>
     </div>
 
@@ -46,12 +49,32 @@
             <div>{{ t('monitoring.facility') }}: {{ c.facility || '—' }}</div>
             <div>{{ t('monitoring.line') }}: {{ c.processing_line || '—' }}</div>
           </div>
-          <el-button size="small" type="primary" @click="access(c)">{{ t('monitoring.streamAccess') }}</el-button>
+          <el-button size="small" type="primary" @click="access(c)">{{ t('monitoring.liveView') }}</el-button>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-dialog v-model="dialog" :title="dialogTitle" width="720px" @closed="stopSnapshots">
+    <el-dialog v-model="assignDialog" :title="t('monitoring.assignStages')" width="520px">
+      <p class="hint">{{ t('monitoring.assignHint') }}</p>
+      <el-form label-position="top">
+        <el-form-item :label="t('monitoring.stage')">
+          <el-select v-model="assignStep" filterable style="width: 100%" @change="loadStepAssignment">
+            <el-option v-for="s in serviceSteps" :key="s.id" :label="stepLabel(t, s.key, s.name)" :value="s.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="t('monitoring.cameras')">
+          <el-select v-model="assignCameraIds" multiple filterable style="width: 100%">
+            <el-option v-for="c in cameras" :key="c.id" :label="c.name" :value="c.id" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="assignDialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :disabled="!assignStep" @click="saveAssignment">{{ t('common.save') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="dialog" :title="dialogTitle" width="720px" @closed="teardownPlayback">
       <el-alert
         v-if="streamError"
         type="error"
@@ -60,7 +83,7 @@
         style="margin-bottom: 14px"
       />
       <el-alert
-        v-else-if="streamUrl || snapshotUrl || mjpegUrl"
+        v-else-if="webrtcUrl || streamUrl || snapshotUrl || mjpegUrl"
         type="success"
         :closable="false"
         :title="t('monitoring.accessGranted')"
@@ -76,11 +99,20 @@
 
       <div v-if="streamMeta.protocol" class="stream-meta">
         <el-tag size="small">{{ streamMeta.protocol.toUpperCase() }}</el-tag>
-        <span v-if="streamMeta.player">{{ t('monitoring.player') }}: {{ streamMeta.player }}</span>
+        <span v-if="streamMeta.player">{{ t('monitoring.player') }}: {{ playerLabel(t, streamMeta.player) }}</span>
       </div>
 
+      <video
+        v-if="webrtcUrl"
+        ref="videoEl"
+        autoplay
+        muted
+        playsinline
+        controls
+        style="width: 100%; border-radius: 8px; background: #111; min-height: 240px"
+      />
       <img
-        v-if="mjpegUrl"
+        v-else-if="mjpegUrl"
         :src="mjpegUrl"
         alt="Live stream"
         style="width: 100%; border-radius: 8px; background: #111; min-height: 200px"
@@ -110,7 +142,7 @@
         style="width: 100%; border-radius: 8px; background: #111"
       />
       <el-alert
-        v-else-if="streamUrl === null && !streamError && !snapshotUrl && !mjpegUrl"
+        v-else-if="streamUrl === null && !streamError && !snapshotUrl && !mjpegUrl && !webrtcUrl"
         type="warning"
         :closable="false"
         :title="t('monitoring.protocolUnsupported')"
@@ -120,15 +152,30 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { getMonitoringOverview, listCameras, requestStreamAccess, syncCameras, verifyStream } from '../api/monitoring'
+import {
+  getMonitoringOverview,
+  listCameras,
+  listStepCameras,
+  replaceStepCameras,
+  requestStreamAccess,
+  syncCameras,
+  verifyStream
+} from '../api/monitoring'
+import { listSteps, listWorkflows } from '../api/workflows'
 import { useAuthStore } from '../store/auth'
+import { playerLabel, stepLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const auth = useAuthStore()
-const canSync = computed(() => auth.hasPerm('settings.manage'))
+const canSync = computed(() => auth.hasPerm('monitoring.manage'))
+const canAssign = computed(() => auth.hasPerm('monitoring.manage'))
+const assignDialog = ref(false)
+const assignStep = ref(null)
+const assignCameraIds = ref([])
+const serviceSteps = ref([])
 const cameras = ref([])
 const overview = ref(null)
 const syncing = ref(false)
@@ -136,8 +183,12 @@ const dialogTitle = ref('')
 const snapshotUrl = ref('')
 const snapshotSrc = ref('')
 const mjpegUrl = ref('')
+const webrtcUrl = ref('')
+const iceServers = ref([{ urls: 'stun:stun.l.google.com:19302' }])
 const snapshotRefreshMs = ref(1000)
 let snapshotTimer = null
+let peer = null
+const videoEl = ref(null)
 const dialog = ref(false)
 const streamUrl = ref(null)
 const streamError = ref('')
@@ -170,39 +221,117 @@ async function sync() {
   }
 }
 
-// Near-live view: reload the NVR snapshot after each frame finishes loading,
-// so slow links never stack up requests.
 function nextSnapshot() {
   const sep = snapshotUrl.value.includes('?') ? '&' : '?'
   snapshotSrc.value = `${snapshotUrl.value}${sep}_=${Date.now()}`
 }
 function scheduleSnapshot() {
   clearTimeout(snapshotTimer)
+  streamError.value = ''
   if (!dialog.value || !snapshotUrl.value) return
   snapshotTimer = setTimeout(nextSnapshot, snapshotRefreshMs.value)
 }
 function onSnapshotError() {
   clearTimeout(snapshotTimer)
   if (!dialog.value || !snapshotUrl.value) return
+  if (!streamError.value) {
+    streamError.value = t('monitoring.streamFailed')
+  }
   snapshotTimer = setTimeout(nextSnapshot, 3000)
 }
-// The MJPEG proxy gives smooth video; if the NVR or network refuses it,
-// drop back to polling snapshots (about 1 frame per second).
 function fallBackToSnapshots() {
   mjpegUrl.value = ''
-  if (snapshotUrl.value) nextSnapshot()
+  webrtcUrl.value = ''
+  stopWebRtc()
+  if (snapshotUrl.value) {
+    nextSnapshot()
+    return
+  }
+  streamError.value = t('monitoring.streamFailed')
 }
-function stopSnapshots() {
+
+function parseIceServers(raw) {
+  if (!raw) return [{ urls: 'stun:stun.l.google.com:19302' }]
+  if (Array.isArray(raw)) return raw
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : [{ urls: 'stun:stun.l.google.com:19302' }]
+  } catch {
+    return [{ urls: 'stun:stun.l.google.com:19302' }]
+  }
+}
+
+function stopWebRtc() {
+  if (peer) {
+    try {
+      peer.close()
+    } catch (_) {
+      /* ignore */
+    }
+    peer = null
+  }
+  if (videoEl.value) {
+    videoEl.value.srcObject = null
+  }
+}
+
+async function startWebRtc(url) {
+  stopWebRtc()
+  const pc = new RTCPeerConnection({ iceServers: iceServers.value })
+  peer = pc
+  pc.addTransceiver('video', { direction: 'recvonly' })
+  pc.addTransceiver('audio', { direction: 'recvonly' })
+  pc.ontrack = (ev) => {
+    const el = videoEl.value
+    if (!el) return
+    el.srcObject = ev.streams[0]
+    el.play().catch(() => {})
+  }
+  const offer = await pc.createOffer()
+  await pc.setLocalDescription(offer)
+  // Wait briefly for ICE gathering so go2rtc gets candidates in the offer.
+  await Promise.race([
+    new Promise((resolve) => {
+      if (pc.iceGatheringState === 'complete') {
+        resolve()
+        return
+      }
+      const done = () => {
+        if (pc.iceGatheringState === 'complete') {
+          pc.removeEventListener('icegatheringstatechange', done)
+          resolve()
+        }
+      }
+      pc.addEventListener('icegatheringstatechange', done)
+    }),
+    new Promise((r) => setTimeout(r, 1500)),
+  ])
+  const sdp = pc.localDescription?.sdp || offer.sdp
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/sdp' },
+    body: sdp,
+  })
+  if (!res.ok) {
+    throw new Error(`WebRTC signaling failed (${res.status})`)
+  }
+  const answer = await res.text()
+  await pc.setRemoteDescription({ type: 'answer', sdp: answer })
+}
+
+function teardownPlayback() {
   clearTimeout(snapshotTimer)
+  stopWebRtc()
   mjpegUrl.value = ''
+  webrtcUrl.value = ''
   snapshotUrl.value = ''
   snapshotSrc.value = ''
+  streamUrl.value = null
 }
 
 async function access(c) {
-  stopSnapshots()
+  teardownPlayback()
   dialogTitle.value = c.name || t('monitoring.authorizedStream')
-  streamUrl.value = null
   streamError.value = ''
   streamMeta.protocol = c.protocol || ''
   streamMeta.player = ''
@@ -214,7 +343,27 @@ async function access(c) {
     streamMeta.player = data.player || 'video'
     if (data.error) {
       streamError.value = data.error
-      streamUrl.value = null
+      return
+    }
+    if (data.player === 'webrtc' && data.webrtc_url) {
+      iceServers.value = parseIceServers(data.ice_servers)
+      snapshotUrl.value = data.snapshot_url || ''
+      mjpegUrl.value = data.mjpeg_url || ''
+      webrtcUrl.value = data.webrtc_url
+      await nextTick()
+      try {
+        await startWebRtc(data.webrtc_url)
+      } catch (e) {
+        webrtcUrl.value = ''
+        stopWebRtc()
+        if (data.mjpeg_url) {
+          mjpegUrl.value = data.mjpeg_url
+        } else if (data.snapshot_url) {
+          nextSnapshot()
+        } else {
+          streamError.value = e.message || t('monitoring.streamFailed')
+        }
+      }
       return
     }
     if (data.player === 'snapshot' && data.snapshot_url) {
@@ -227,7 +376,6 @@ async function access(c) {
       }
       return
     }
-    // Backend returns stream_url; older alias url is also accepted.
     streamUrl.value = data.stream_url || data.url || null
   } catch (e) {
     streamUrl.value = null
@@ -235,8 +383,53 @@ async function access(c) {
   }
 }
 
+async function loadServiceSteps() {
+  try {
+    const workflows = await listWorkflows()
+    const active = (workflows.results || workflows || []).find((w) => w.status === 'active' && w.active_version)
+    if (!active?.active_version?.id) {
+      serviceSteps.value = []
+      return
+    }
+    const data = await listSteps(active.active_version.id)
+    serviceSteps.value = data.results || []
+  } catch {
+    serviceSteps.value = []
+  }
+}
+
+async function openAssign() {
+  await loadServiceSteps()
+  assignStep.value = null
+  assignCameraIds.value = []
+  assignDialog.value = true
+}
+
+async function loadStepAssignment() {
+  if (!assignStep.value) {
+    assignCameraIds.value = []
+    return
+  }
+  try {
+    const data = await listStepCameras({ step: assignStep.value })
+    assignCameraIds.value = (data.results || data || []).map((l) => l.camera)
+  } catch {
+    assignCameraIds.value = []
+  }
+}
+
+async function saveAssignment() {
+  try {
+    await replaceStepCameras(assignStep.value, assignCameraIds.value)
+    ElMessage.success(t('common.saved'))
+    assignDialog.value = false
+  } catch (e) {
+    ElMessage.error(e.response?.data?.error?.message || t('common.operationFailed'))
+  }
+}
+
 onMounted(load)
-onBeforeUnmount(stopSnapshots)
+onBeforeUnmount(teardownPlayback)
 </script>
 
 <style scoped>
@@ -258,6 +451,7 @@ onBeforeUnmount(stopSnapshots)
   gap: 8px;
   margin-bottom: 16px;
 }
+.hint { color: var(--el-text-color-secondary); margin: 0 0 12px; line-height: 1.5; }
 .overview-device {
   color: var(--el-text-color-secondary);
   font-size: 13px;
