@@ -15,9 +15,12 @@ import JalaliText from './components/JalaliText.vue'
 import * as jalali from './utils/jalali'
 import './theme/base.css'
 
+const initialLocale = localStorage.getItem('cetana.locale') || 'en'
+document.documentElement.lang = initialLocale === 'fa' ? 'fa' : 'en'
+
 const i18n = createI18n({
   legacy: false,
-  locale: localStorage.getItem('cetana.locale') || 'en',
+  locale: initialLocale,
   fallbackLocale: 'en',
   messages: { en, fa }
 })

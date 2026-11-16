@@ -55,18 +55,18 @@
       style="margin-top: 12px"
       :title="testResult.ok
         ? t('settings.testResult', { version: testResult.version?.server_version || '' })
-        : `Connection failed: ${testResult.error}`"
+        : t('common.connectionFailed', { error: testResult.error })"
     />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { getSettings, saveSettings, testOdoo } from '../api/settings'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const schema = ref([])
 const form = reactive({})
 const saving = ref(false)
@@ -96,7 +96,7 @@ async function runTest() {
   try {
     testResult.value = await testOdoo()
   } catch (e) {
-    testResult.value = { ok: false, error: e.response?.data?.error?.message || 'Request failed' }
+    testResult.value = { ok: false, error: e.response?.data?.error?.message || t('common.operationFailed') }
   } finally {
     testing.value = false
   }
@@ -113,13 +113,17 @@ const grouped = computed(() => {
 })
 
 async function load() {
-  const data = await getSettings()
+  const data = await getSettings(locale.value)
   schema.value = data.schema || []
   const values = data.values || {}
   for (const entry of schema.value) {
     form[entry.key] = entry.type === 'secret' ? '' : values[entry.key]
   }
 }
+
+watch(locale, () => {
+  load()
+})
 
 async function save() {
   saving.value = true
@@ -137,7 +141,7 @@ async function save() {
     ElMessage.success(t('common.save'))
     await load()
   } catch (e) {
-    ElMessage.error(e.response?.data?.error?.message || 'Save failed')
+    ElMessage.error(e.response?.data?.error?.message || t('common.operationFailed'))
   } finally {
     saving.value = false
   }

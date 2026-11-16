@@ -14,16 +14,16 @@
         <el-form-item :label="t('login.username')">
           <el-input v-model="form.username" disabled />
         </el-form-item>
-        <el-form-item label="Email">
+        <el-form-item :label="t('common.email')">
           <el-input v-model="form.email" />
         </el-form-item>
-        <el-form-item :label="t('login.username')">
+        <el-form-item :label="t('profile.firstName')">
           <el-input v-model="form.first_name" />
         </el-form-item>
-        <el-form-item label="Last name">
+        <el-form-item :label="t('profile.lastName')">
           <el-input v-model="form.last_name" />
         </el-form-item>
-        <el-form-item label="Phone">
+        <el-form-item :label="t('common.phone')">
           <el-input v-model="form.phone" />
         </el-form-item>
         <el-form-item>

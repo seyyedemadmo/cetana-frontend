@@ -27,7 +27,7 @@
           </el-button>
         </div>
         <div class="header-right">
-          <el-button text @click="theme.toggleTheme()" :title="t('settings.theme')">
+          <el-button text @click="theme.toggleTheme()" :title="t('common.theme')">
             <el-icon size="18"><Moon v-if="theme.theme === 'light'" /><Sunny v-else /></el-icon>
           </el-button>
           <el-button text @click="theme.toggleDir()" :title="'RTL/LTR'">
@@ -62,8 +62,8 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">My profile</el-dropdown-item>
-                <el-dropdown-item command="manual">📖 راهنمای کاربر</el-dropdown-item>
+                <el-dropdown-item command="profile">{{ t('common.myProfile') }}</el-dropdown-item>
+                <el-dropdown-item command="manual">{{ t('nav.manual') }}</el-dropdown-item>
                 <el-dropdown-item command="logout">{{ t('common.logout') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -130,6 +130,7 @@ const localeLabel = computed(() => (locale.value === 'fa' ? 'فارسی' : 'EN')
 function onLocale(cmd) {
   locale.value = cmd
   localStorage.setItem('cetana.locale', cmd)
+  document.documentElement.lang = cmd === 'fa' ? 'fa' : 'en'
 }
 
 function onUserCommand(cmd) {

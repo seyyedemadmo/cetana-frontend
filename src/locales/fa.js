@@ -51,7 +51,24 @@ export default {
     ban: 'مسدود',
     unban: 'رفع مسدودیت',
     created: 'ایجاد',
-    updated: 'به‌روزرسانی'
+    updated: 'به‌روزرسانی',
+    customer: 'مشتری',
+    order: 'سفارش',
+    amount: 'مبلغ',
+    note: 'یادداشت',
+    name: 'نام',
+    slug: 'شناسه',
+    key: 'کلید',
+    currency: 'ارز',
+    number: 'شماره',
+    open: 'باز',
+    closed: 'بسته',
+    hours: 'ساعات',
+    capacity: 'ظرفیت',
+    theme: 'پوسته',
+    myProfile: 'پروفایل من',
+    operationFailed: 'عملیات ناموفق بود',
+    connectionFailed: 'اتصال ناموفق: {error}'
   },
   btn: {
     start: 'شروع',
@@ -95,7 +112,8 @@ export default {
     activeReservations: 'رزروهای فعال',
     todaysReservations: 'رزروهای امروز',
     processingOrders: 'سفارش‌های در حال فرآوری',
-    pendingPayments: 'پرداخت‌های در انتظار'
+    pendingPayments: 'پرداخت‌های در انتظار',
+    liveHint: 'این داشبورد داده‌های زنده API را در صورت در دسترس بودن نشان می‌دهد.'
   },
   jalali: {
     pickDate: 'انتخاب تاریخ',
@@ -146,7 +164,20 @@ export default {
     generateSlotsHint: 'از تنظیمات رزرو (ساعات کاری، مدت بازه) و برنامه روز استفاده می‌کند.',
     addDaySchedule: 'افزودن برنامه روز',
     notePlaceholder: 'مثلاً تعطیل عمومی',
-    confirmReject: 'این رزرو رد شود؟'
+    confirmReject: 'این رزرو رد شود؟',
+    slots: 'بازه‌ها',
+    bookedCapacity: 'رزروشده / ظرفیت',
+    blocked: 'مسدود',
+    capacityPerSlot: 'ظرفیت هر بازه',
+    createdPending: 'رزرو ایجاد شد (در انتظار تأیید)',
+    approvedSms: 'تأیید شد — پیامک برای مشتری ارسال شد',
+    rejected: 'رد شد',
+    cancelled: 'لغو شد',
+    slotsCreated: '{count} بازه ایجاد شد',
+    scheduleSaved: 'برنامه ذخیره شد',
+    deleted: 'حذف شد',
+    paymentRequested: 'درخواست پرداخت · {url}',
+    left: 'باقی‌مانده'
   },
   orders: {
     title: 'سفارش‌ها',
@@ -156,7 +187,10 @@ export default {
     selectProcessingSteps: 'انتخاب مراحل فرآوری',
     create: 'ایجاد',
     orderConfirmed: 'سفارش تأیید شد',
-    confirmedAt: 'تأیید'
+    confirmedAt: 'تأیید',
+    netKg: 'خالص (کیلوگرم)',
+    grossWeight: 'وزن ناخالص (کیلوگرم)',
+    tareWeight: 'وزن ظرف (کیلوگرم)'
   },
   processing: {
     title: 'فرآوری',
@@ -166,7 +200,11 @@ export default {
     complete: 'تکمیل',
     reject: 'رد',
     startedAt: 'شروع',
-    completedAt: 'پایان'
+    completedAt: 'پایان',
+    step: 'مرحله',
+    attempt: 'تلاش',
+    actionOk: '{action} انجام شد',
+    actionFailed: '{action} ناموفق بود'
   },
   workflows: {
     title: 'گردش‌کارها',
@@ -180,16 +218,20 @@ export default {
     terminalStep: 'مرحله پایانی',
     add: 'افزودن',
     back: 'بازگشت',
-    publish: 'انتشار',
     viewingActive: 'نسخه پیش‌فرض یافت نشد. یک پیش‌جدید با کپی نسخه فعال ایجاد شده است. اکنون می‌توانید ویرایش کنید و منتشر کنید.',
-    designerHint: 'گره‌ها را بکشید تا مرتب شوند · از نقطه پایین یک گره به گره دیگر بکشید تا یک انتقال ایجاد شود · کلید Delete گره را حذف می‌کند'
+    designerHint: 'گره‌ها را بکشید تا مرتب شوند · از نقطه پایین یک گره به گره دیگر بکشید تا یک انتقال ایجاد شود · کلید Delete گره را حذف می‌کند',
+    loadFailed: 'بارگذاری گردش‌کار ناموفق: {error}',
+    versionsFailed: 'بارگذاری نسخه‌ها ناموفق: {error}',
+    transitionAdded: 'انتقال افزوده شد'
   },
   invoices: {
     title: 'فاکتورها',
     newInvoice: 'فاکتور جدید',
     selectOrder: 'انتخاب سفارش تأییدشده',
     syncToOdoo: 'همگام‌سازی با Odoo',
-    syncedAt: 'همگام‌سازی'
+    syncedAt: 'همگام‌سازی',
+    syncState: 'وضعیت همگام‌سازی',
+    odooId: 'شناسه Odoo'
   },
   payments: {
     title: 'پرداخت‌ها',
@@ -197,7 +239,9 @@ export default {
     selectOrder: 'انتخاب سفارش',
     verify: 'تأیید',
     requestTime: 'درخواست',
-    verifiedAt: 'تأیید'
+    verifiedAt: 'تأیید',
+    transaction: 'تراکنش',
+    gateway: 'درگاه'
   },
   profile: {
     title: 'پروفایل من',
@@ -206,7 +250,9 @@ export default {
     roles: 'نقش‌ها',
     noRoles: 'بدون نقش',
     save: 'ذخیره',
-    changePasswordAction: 'تغییر رمز عبور'
+    changePasswordAction: 'تغییر رمز عبور',
+    firstName: 'نام',
+    lastName: 'نام خانوادگی'
   },
   reports: {
     title: 'گزارش‌ها',
@@ -215,6 +261,10 @@ export default {
     generate: 'تولید',
     pdf: 'PDF',
     generatedAt: 'تولید'
+  },
+  roles: {
+    title: 'نقش‌ها',
+    permissions: 'مجوزها'
   },
   monitoring: {
     title: 'پایش زنده',
@@ -226,7 +276,17 @@ export default {
     accessDenied: 'دسترسی به این پخش رد شد',
     noCameras: 'دوربین فعالی موجود نیست',
     player: 'پخش‌کننده',
-    protocolUnsupported: 'این پروتکل به درگاه رسانه نیاز دارد. آن را در تنظیمات ← پایش زنده پیکربندی کنید.'
+    protocolUnsupported: 'این پروتکل به درگاه رسانه نیاز دارد. آن را در تنظیمات ← پایش زنده پیکربندی کنید.',
+    syncNvr: 'همگام‌سازی دوربین‌ها از NVR',
+    syncDone: 'همگام‌سازی انجام شد: {found} کانال یافت شد، {created} مورد جدید',
+    syncFailed: 'ارتباط با NVR برقرار نشد',
+    total: 'کل',
+    online: 'آنلاین',
+    offline: 'آفلاین',
+    unknown: 'نامشخص',
+    channel: 'کانال',
+    model: 'مدل',
+    resolution: 'وضوح'
   },
   settings: {
     title: 'تنظیمات',

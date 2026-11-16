@@ -13,10 +13,10 @@
 
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
-      <el-table-column prop="transaction_id" label="Transaction" min-width="180" />
-      <el-table-column prop="gateway" label="Gateway" width="120" />
-      <el-table-column prop="amount" label="Amount" width="140" />
-      <el-table-column prop="currency" label="Currency" width="90" />
+      <el-table-column prop="transaction_id" :label="t('payments.transaction')" min-width="180" />
+      <el-table-column prop="gateway" :label="t('payments.gateway')" width="120" />
+      <el-table-column prop="amount" :label="t('common.amount')" width="140" />
+      <el-table-column prop="currency" :label="t('common.currency')" width="90" />
       <el-table-column prop="status" :label="t('common.status')" width="130">
         <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
       </el-table-column>
@@ -35,13 +35,13 @@
 
     <el-dialog v-model="dialog" :title="t('payments.newPayment')" width="460px">
       <el-form label-position="top">
-        <el-form-item label="Order">
+        <el-form-item :label="t('common.order')">
           <el-select v-model="form.order" filterable :placeholder="t('payments.selectOrder')" style="width: 100%">
             <el-option v-for="o in orders" :key="o.id" :label="o.order_number" :value="o.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="Amount">
-          <el-input-number vmodel="form.amount" :min="0" style="width: 100%" />
+        <el-form-item :label="t('common.amount')">
+          <el-input-number v-model="form.amount" :min="0" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -66,7 +66,7 @@ const loading = ref(false)
 const dialog = ref(false)
 const form = reactive({ order: null, amount: 0 })
 
-const errMsg = (e) => e.response?.data?.error?.message || 'Operation failed'
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function load() {
   loading.value = true

@@ -10,16 +10,16 @@
 
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
-      <el-table-column label="Order" width="190">
+      <el-table-column :label="t('common.order')" width="190">
         <template #default="{ row }">{{ row.order_number || row.order }}</template>
       </el-table-column>
-      <el-table-column label="Step" width="150">
+      <el-table-column :label="t('processing.step')" width="150">
         <template #default="{ row }">{{ row.step_key || row.step }}</template>
       </el-table-column>
       <el-table-column prop="state" :label="t('common.status')" width="150">
         <template #default="{ row }"><el-tag :type="stateType(row.state)">{{ row.state }}</el-tag></template>
       </el-table-column>
-      <el-table-column prop="attempt" label="Attempt" width="90" />
+      <el-table-column prop="attempt" :label="t('processing.attempt')" width="90" />
       <el-table-column :label="t('processing.startedAt')" width="150">
         <template #default="{ row }"><JalaliText :value="row.started_at" mode="datetime" /></template>
       </el-table-column>
@@ -64,10 +64,10 @@ async function load() {
 async function run(row, action) {
   try {
     await executionAction(row.id, action)
-    ElMessage.success(`${action} ok`)
+    ElMessage.success(t('processing.actionOk', { action }))
     load()
   } catch (e) {
-    ElMessage.error(e.response?.data?.error?.message || `${action} failed`)
+    ElMessage.error(e.response?.data?.error?.message || t('processing.actionFailed', { action }))
   }
 }
 

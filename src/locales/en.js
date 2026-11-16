@@ -51,7 +51,24 @@ export default {
     ban: 'Ban',
     unban: 'Unban',
     created: 'Created',
-    updated: 'Updated'
+    updated: 'Updated',
+    customer: 'Customer',
+    order: 'Order',
+    amount: 'Amount',
+    note: 'Note',
+    name: 'Name',
+    slug: 'Slug',
+    key: 'Key',
+    currency: 'Currency',
+    number: 'Number',
+    open: 'Open',
+    closed: 'Closed',
+    hours: 'Hours',
+    capacity: 'Capacity',
+    theme: 'Theme',
+    myProfile: 'My profile',
+    operationFailed: 'Operation failed',
+    connectionFailed: 'Connection failed: {error}'
   },
   btn: {
     start: 'Start',
@@ -95,7 +112,8 @@ export default {
     activeReservations: 'Active reservations',
     todaysReservations: "Today's reservations",
     processingOrders: 'Processing orders',
-    pendingPayments: 'Pending payments'
+    pendingPayments: 'Pending payments',
+    liveHint: 'This dashboard reflects live API data where endpoints are available.'
   },
   jalali: {
     pickDate: 'Select date',
@@ -146,7 +164,20 @@ export default {
     generateSlotsHint: 'Uses the Reservation settings (working hours, slot duration) and the day schedule.',
     addDaySchedule: 'Add day schedule',
     notePlaceholder: 'e.g. Public holiday',
-    confirmReject: 'Reject this reservation?'
+    confirmReject: 'Reject this reservation?',
+    slots: 'Slots',
+    bookedCapacity: 'Booked / Capacity',
+    blocked: 'Blocked',
+    capacityPerSlot: 'Capacity per slot',
+    createdPending: 'Reservation created (pending approval)',
+    approvedSms: 'Approved — SMS sent to customer',
+    rejected: 'Rejected',
+    cancelled: 'Cancelled',
+    slotsCreated: '{count} slot(s) created',
+    scheduleSaved: 'Schedule saved',
+    deleted: 'Deleted',
+    paymentRequested: 'Payment requested · {url}',
+    left: 'left'
   },
   orders: {
     title: 'Orders',
@@ -156,7 +187,10 @@ export default {
     selectProcessingSteps: 'Select processing steps',
     create: 'Create',
     orderConfirmed: 'Order confirmed',
-    confirmedAt: 'Confirmed'
+    confirmedAt: 'Confirmed',
+    netKg: 'Net (kg)',
+    grossWeight: 'Gross weight (kg)',
+    tareWeight: 'Tare weight (kg)'
   },
   processing: {
     title: 'Processing',
@@ -166,7 +200,11 @@ export default {
     complete: 'Complete',
     reject: 'Reject',
     startedAt: 'Started',
-    completedAt: 'Completed'
+    completedAt: 'Completed',
+    step: 'Step',
+    attempt: 'Attempt',
+    actionOk: '{action} ok',
+    actionFailed: '{action} failed'
   },
   workflows: {
     title: 'Workflows',
@@ -180,16 +218,20 @@ export default {
     terminalStep: 'Terminal step',
     add: 'Add',
     back: 'Back',
-    publish: 'Publish',
     viewingActive: 'No draft version found. A new draft has been created by copying the active version. You can now edit and publish it.',
-    designerHint: "Drag nodes to arrange · drag from a node's bottom dot to another node to create a transition · Delete key removes a node"
+    designerHint: "Drag nodes to arrange · drag from a node's bottom dot to another node to create a transition · Delete key removes a node",
+    loadFailed: 'Failed to load workflow: {error}',
+    versionsFailed: 'Failed to load versions: {error}',
+    transitionAdded: 'Transition added'
   },
   invoices: {
     title: 'Invoices',
     newInvoice: 'New invoice',
     selectOrder: 'Select a confirmed order',
     syncToOdoo: 'Sync to Odoo',
-    syncedAt: 'Synced'
+    syncedAt: 'Synced',
+    syncState: 'Sync state',
+    odooId: 'Odoo ID'
   },
   payments: {
     title: 'Payments',
@@ -197,7 +239,9 @@ export default {
     selectOrder: 'Select order',
     verify: 'Verify',
     requestTime: 'Requested',
-    verifiedAt: 'Verified'
+    verifiedAt: 'Verified',
+    transaction: 'Transaction',
+    gateway: 'Gateway'
   },
   profile: {
     title: 'My profile',
@@ -206,7 +250,9 @@ export default {
     roles: 'Roles',
     noRoles: 'No roles',
     save: 'Save',
-    changePasswordAction: 'Change password'
+    changePasswordAction: 'Change password',
+    firstName: 'First name',
+    lastName: 'Last name'
   },
   reports: {
     title: 'Reports',
@@ -215,6 +261,10 @@ export default {
     generate: 'Generate',
     pdf: 'PDF',
     generatedAt: 'Generated'
+  },
+  roles: {
+    title: 'Roles',
+    permissions: 'Permissions'
   },
   monitoring: {
     title: 'Monitoring',
@@ -226,7 +276,17 @@ export default {
     accessDenied: 'Access denied for this stream',
     noCameras: 'No active cameras available',
     player: 'Player',
-    protocolUnsupported: 'This protocol needs a media gateway. Configure one under Settings → Live Monitoring.'
+    protocolUnsupported: 'This protocol needs a media gateway. Configure one under Settings → Live Monitoring.',
+    syncNvr: 'Sync cameras from NVR',
+    syncDone: 'NVR synced: {found} channels found, {created} new',
+    syncFailed: 'Could not sync with the NVR',
+    total: 'Total',
+    online: 'Online',
+    offline: 'Offline',
+    unknown: 'Unknown',
+    channel: 'Channel',
+    model: 'Model',
+    resolution: 'Resolution'
   },
   settings: {
     title: 'Settings',

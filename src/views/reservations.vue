@@ -20,7 +20,7 @@
           <el-table-column prop="title" :label="t('reservations.titleField')" min-width="160">
             <template #default="{ row }">{{ row.title || '—' }}</template>
           </el-table-column>
-          <el-table-column prop="customer_name" label="Customer" min-width="160" />
+          <el-table-column prop="customer_name" :label="t('common.customer')" min-width="160" />
           <el-table-column :label="t('reservations.date')" width="120">
             <template #default="{ row }"><JalaliText :value="row.slot?.date" /></template>
           </el-table-column>
@@ -46,7 +46,7 @@
       </el-tab-pane>
 
       <!-- SLOTS -->
-      <el-tab-pane label="Slots">
+      <el-tab-pane :label="t('reservations.slots')">
         <div style="margin-bottom: 12px; text-align: right">
           <el-button v-if="auth.hasPerm('slot.manage')" type="primary" @click="genDialog = true">
             <el-icon><Calendar /></el-icon>&nbsp;{{ t('reservations.generateSlots') }}
@@ -60,10 +60,10 @@
           <el-table-column :label="t('reservations.time')" width="160">
             <template #default="{ row }">{{ formatTimeRange(row.start_time, row.end_time) }}</template>
           </el-table-column>
-          <el-table-column label="Booked / Capacity" width="160">
+          <el-table-column :label="t('reservations.bookedCapacity')" width="160">
             <template #default="{ row }">{{ row.booked_count }} / {{ row.capacity }}</template>
           </el-table-column>
-          <el-table-column prop="blocked" label="Blocked" width="100">
+          <el-table-column prop="blocked" :label="t('reservations.blocked')" width="100">
             <template #default="{ row }"><el-tag :type="row.blocked ? 'danger' : 'info'">{{ row.blocked }}</el-tag></template>
           </el-table-column>
         </el-table>
@@ -81,11 +81,11 @@
           <el-table-column :label="t('reservations.date')" width="130">
             <template #default="{ row }"><JalaliText :value="row.date" /></template>
           </el-table-column>
-          <el-table-column label="Open" width="100">
-            <template #default="{ row }"><el-tag :type="row.is_open ? 'success' : 'danger'">{{ row.is_open ? 'Open' : 'Closed' }}</el-tag></template>
+          <el-table-column :label="t('common.open')" width="100">
+            <template #default="{ row }"><el-tag :type="row.is_open ? 'success' : 'danger'">{{ row.is_open ? t('common.open') : t('common.closed') }}</el-tag></template>
           </el-table-column>
-          <el-table-column prop="capacity" label="Capacity" width="110" />
-          <el-table-column label="Hours" width="170">
+          <el-table-column prop="capacity" :label="t('common.capacity')" width="110" />
+          <el-table-column :label="t('common.hours')" width="170">
             <template #default="{ row }">{{ formatTimeRange(row.start_time, row.end_time) }}</template>
           </el-table-column>
           <el-table-column :label="t('common.actions')" width="110" align="right">
@@ -127,7 +127,7 @@
         {{ t('reservations.payForReservation') }}
       </p>
       <el-form label-position="top">
-        <el-form-item label="Amount">
+        <el-form-item :label="t('common.amount')">
           <el-input-number v-model="payAmount" :min="0" style="width: 100%" />
         </el-form-item>
       </el-form>
@@ -167,13 +167,13 @@
         <el-form-item :label="t('reservations.date')">
           <JalaliDatePicker v-model="schedForm.date" />
         </el-form-item>
-        <el-form-item label="Open">
+        <el-form-item :label="t('common.open')">
           <el-switch v-model="schedForm.is_open" />
         </el-form-item>
-        <el-form-item label="Capacity per slot">
+        <el-form-item :label="t('reservations.capacityPerSlot')">
           <el-input-number v-model="schedForm.capacity" :min="1" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="Note">
+        <el-form-item :label="t('common.note')">
           <el-input v-model="schedForm.note" :placeholder="t('reservations.notePlaceholder')" />
         </el-form-item>
       </el-form>
@@ -202,7 +202,7 @@ const { t } = useI18n()
 const auth = useAuthStore()
 
 function slotLabel(s) {
-  return `${formatJalaliDate(s.date) || '—'} · ${formatTime(s.start_time) || '—'} (${s.capacity - s.booked_count} left)`
+  return `${formatJalaliDate(s.date) || '—'} · ${formatTime(s.start_time) || '—'} (${s.capacity - s.booked_count} ${t('reservations.left')})`
 }
 
 const rows = ref([])
@@ -225,7 +225,7 @@ const genDate = ref('')
 const schedDialog = ref(false)
 const schedForm = reactive({ facility: null, date: '', is_open: true, capacity: 2, note: '' })
 
-const errMsg = (e) => e.response?.data?.error?.message || 'Operation failed'
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function load() {
   loading.value = true
@@ -251,7 +251,7 @@ async function loadFacilities() {
 async function create() {
   try {
     const reservation = await createReservation({ slot: form.slot, title: form.title })
-    ElMessage.success('Reservation created (pending approval)')
+    ElMessage.success(t('reservations.createdPending'))
     newDialog.value = false
     createdReservation.value = reservation
     payAmount.value = 0
@@ -267,7 +267,7 @@ async function create() {
 async function payNow() {
   try {
     const result = await createPayment({ reservation: createdReservation.value.id, amount: payAmount.value })
-    ElMessage.success(`Payment requested · ${result.redirect_url}`)
+    ElMessage.success(t('reservations.paymentRequested', { url: result.redirect_url }))
     payDialog.value = false
   } catch (e) {
     ElMessage.error(errMsg(e))
@@ -277,7 +277,7 @@ async function payNow() {
 async function approve(row) {
   try {
     await approveReservation(row.id)
-    ElMessage.success('Approved — SMS sent to customer')
+    ElMessage.success(t('reservations.approvedSms'))
     load()
   } catch (e) {
     ElMessage.error(errMsg(e))
@@ -288,7 +288,7 @@ async function reject(row) {
   try {
     await ElMessageBox.confirm(t('reservations.confirmReject'), t('common.confirmAction'), { type: 'warning' })
     await rejectReservation(row.id)
-    ElMessage.success('Rejected')
+    ElMessage.success(t('reservations.rejected'))
     load()
   } catch (e) {
     if (e !== 'cancel') ElMessage.error(errMsg(e))
@@ -298,7 +298,7 @@ async function reject(row) {
 async function cancel(row) {
   try {
     await cancelReservation(row.id)
-    ElMessage.success('Cancelled')
+    ElMessage.success(t('reservations.cancelled'))
     load()
   } catch (e) {
     ElMessage.error(errMsg(e))
@@ -308,7 +308,7 @@ async function cancel(row) {
 async function doGenerate() {
   try {
     const result = await generateSlots(genFacility.value, genDate.value)
-    ElMessage.success(`${result.created} slot(s) created`)
+    ElMessage.success(t('reservations.slotsCreated', { count: result.created }))
     genDialog.value = false
     load()
   } catch (e) {
@@ -319,7 +319,7 @@ async function doGenerate() {
 async function saveSchedule() {
   try {
     await createSchedule({ ...schedForm })
-    ElMessage.success('Schedule saved')
+    ElMessage.success(t('reservations.scheduleSaved'))
     schedDialog.value = false
     load()
   } catch (e) {
@@ -330,7 +330,7 @@ async function saveSchedule() {
 async function removeSchedule(row) {
   try {
     await deleteSchedule(row.id)
-    ElMessage.success('Deleted')
+    ElMessage.success(t('reservations.deleted'))
     load()
   } catch (e) {
     ElMessage.error(errMsg(e))

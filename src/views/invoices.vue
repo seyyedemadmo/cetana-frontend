@@ -13,10 +13,10 @@
 
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
-      <el-table-column prop="number" label="Number" width="220" />
-      <el-table-column prop="amount" label="Amount" width="150" />
-      <el-table-column prop="currency" label="Currency" width="100" />
-      <el-table-column prop="sync_state" label="Sync state" width="150">
+      <el-table-column prop="number" :label="t('common.number')" width="220" />
+      <el-table-column prop="amount" :label="t('common.amount')" width="150" />
+      <el-table-column prop="currency" :label="t('common.currency')" width="100" />
+      <el-table-column prop="sync_state" :label="t('invoices.syncState')" width="150">
         <template #default="{ row }"><el-tag :type="row.sync_state === 'synchronized' ? 'success' : 'info'">{{ row.sync_state }}</el-tag></template>
       </el-table-column>
       <el-table-column :label="t('common.created')" width="150">
@@ -25,7 +25,7 @@
       <el-table-column :label="t('invoices.syncedAt')" width="150">
         <template #default="{ row }"><JalaliText :value="row.synced_at" mode="datetime" /></template>
       </el-table-column>
-      <el-table-column prop="odoo_invoice_id" label="Odoo ID" min-width="160">
+      <el-table-column prop="odoo_invoice_id" :label="t('invoices.odooId')" min-width="160">
         <template #default="{ row }">{{ row.odoo_invoice_id || '—' }}</template>
       </el-table-column>
       <el-table-column :label="t('common.actions')" width="110" align="right">
@@ -61,7 +61,7 @@ const loading = ref(false)
 const dialog = ref(false)
 const form = reactive({ order: null })
 
-const errMsg = (e) => e.response?.data?.error?.message || 'Operation failed'
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function load() {
   loading.value = true

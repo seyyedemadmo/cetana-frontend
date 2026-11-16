@@ -3,9 +3,9 @@
     <div class="page-header"><h2>{{ t('nav.roles') }}</h2></div>
 
     <el-table :data="rows" v-loading="loading" stripe>
-      <el-table-column prop="name" label="Name" min-width="180" />
-      <el-table-column prop="slug" label="Slug" width="180" />
-      <el-table-column label="Permissions" min-width="120">
+      <el-table-column prop="name" :label="t('common.name')" min-width="180" />
+      <el-table-column prop="slug" :label="t('common.slug')" width="180" />
+      <el-table-column :label="t('roles.permissions')" min-width="120">
         <template #default="{ row }">{{ row.permissions?.length ?? row.permission_count ?? '—' }}</template>
       </el-table-column>
     </el-table>

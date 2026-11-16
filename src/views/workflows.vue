@@ -12,8 +12,8 @@
     </el-alert>
 
     <el-table :data="rows" v-loading="loading" stripe>
-      <el-table-column prop="name" label="Name" min-width="180" />
-      <el-table-column prop="slug" label="Slug" width="200" />
+      <el-table-column prop="name" :label="t('common.name')" min-width="180" />
+      <el-table-column prop="slug" :label="t('common.slug')" width="200" />
       <el-table-column prop="status" :label="t('common.status')" width="120">
         <template #default="{ row }"><el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status }}</el-tag></template>
       </el-table-column>

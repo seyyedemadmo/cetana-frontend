@@ -48,10 +48,10 @@
 
     <el-dialog v-model="dialog" :title="t('workflows.addStep')" width="460px">
       <el-form label-position="top">
-        <el-form-item label="Key">
+        <el-form-item :label="t('common.key')">
           <el-input v-model="form.key" :placeholder="t('workflows.stepKeyPlaceholder')" />
         </el-form-item>
-        <el-form-item label="Name">
+        <el-form-item :label="t('common.name')">
           <el-input v-model="form.name" :placeholder="t('workflows.stepNamePlaceholder')" />
         </el-form-item>
         <el-form-item>
@@ -107,7 +107,7 @@ async function load() {
   try {
     workflow.value = await getWorkflow(route.params.id)
   } catch (e) {
-    ElMessage.error('Failed to load workflow: ' + errMsg(e))
+    ElMessage.error(t('workflows.loadFailed', { error: errMsg(e) }))
     return
   }
 
@@ -146,7 +146,7 @@ async function load() {
     versionId.value = draft.id
     await loadGraph(draft.id)
   } catch (e) {
-    ElMessage.error('Failed to load versions: ' + errMsg(e))
+    ElMessage.error(t('workflows.versionsFailed', { error: errMsg(e) }))
   }
 }
 
@@ -258,7 +258,7 @@ async function onConnect(connection) {
       to_step: connection.target
     })
     edges.value.push({ id: transition.id, source: connection.source, target: connection.target })
-    ElMessage.success('Transition added')
+    ElMessage.success(t('workflows.transitionAdded'))
   } catch (e) {
     ElMessage.error(errMsg(e))
   }

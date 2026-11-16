@@ -13,7 +13,7 @@
 
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
-      <el-table-column prop="order_number" label="Order" width="180" />
+      <el-table-column prop="order_number" :label="t('common.order')" width="180" />
       <el-table-column prop="status" :label="t('common.status')" width="140" />
       <el-table-column :label="t('reports.generatedAt')" width="160">
         <template #default="{ row }"><JalaliText :value="row.generated_at || row.created_at" mode="datetime" /></template>
@@ -51,7 +51,7 @@ const loading = ref(false)
 const genDialog = ref(false)
 const genOrder = ref(null)
 
-const errMsg = (e) => e.response?.data?.error?.message || 'Operation failed'
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function load() {
   loading.value = true

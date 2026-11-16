@@ -22,7 +22,7 @@
     <el-card style="margin-top: 16px">
       <template #header>{{ t('app.name') }}</template>
       <p style="margin: 0; color: var(--el-text-color-secondary)">
-        {{ t('app.tagline') }}. This dashboard reflects live API data where endpoints are available.
+        {{ t('app.tagline') }}. {{ t('dashboard.liveHint') }}
       </p>
     </el-card>
   </div>

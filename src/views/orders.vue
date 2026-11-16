@@ -13,11 +13,11 @@
 
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
-      <el-table-column prop="order_number" label="Order" width="180" />
+      <el-table-column prop="order_number" :label="t('common.order')" width="180" />
       <el-table-column prop="status" :label="t('common.status')" width="150">
         <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
       </el-table-column>
-      <el-table-column label="Net (kg)" width="110">
+      <el-table-column :label="t('orders.netKg')" width="110">
         <template #default="{ row }">{{ row.net_weight_kg ?? '—' }}</template>
       </el-table-column>
       <el-table-column :label="t('common.total')" width="160">
@@ -52,8 +52,8 @@
     <!-- Weigh -->
     <el-dialog v-model="weighDialog" :title="t('orders.recordWeighing')" width="420px">
       <el-form label-position="top">
-        <el-form-item label="Gross weight (kg)"><el-input-number v-model="weighForm.gross" :min="0" style="width: 100%" /></el-form-item>
-        <el-form-item label="Tare weight (kg)"><el-input-number v-model="weighForm.tare" :min="0" style="width: 100%" /></el-form-item>
+        <el-form-item :label="t('orders.grossWeight')"><el-input-number v-model="weighForm.gross" :min="0" style="width: 100%" /></el-form-item>
+        <el-form-item :label="t('orders.tareWeight')"><el-input-number v-model="weighForm.tare" :min="0" style="width: 100%" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="weighDialog = false">{{ t('common.cancel') }}</el-button>
@@ -110,7 +110,7 @@ const selectedKeys = ref([])
 const priceResult = ref(null)
 const currentOrder = ref(null)
 
-const errMsg = (e) => e.response?.data?.error?.message || 'Operation failed'
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function load() {
   loading.value = true
