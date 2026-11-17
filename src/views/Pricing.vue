@@ -13,6 +13,38 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    >
+      <el-select
+        v-model="filters.rule_type"
+        clearable
+        :placeholder="t('pricing.ruleType')"
+        style="width: 160px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option value="per_kg" :label="t('pricing.types.per_kg')" />
+        <el-option value="fixed" :label="t('pricing.types.fixed')" />
+        <el-option value="discount" :label="t('pricing.types.discount')" />
+        <el-option value="tax" :label="t('pricing.types.tax')" />
+        <el-option value="fee" :label="t('pricing.types.fee')" />
+      </el-select>
+      <el-select
+        v-model="filters.active"
+        clearable
+        :placeholder="t('common.status')"
+        style="width: 140px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option :label="t('common.active')" :value="true" />
+        <el-option :label="t('common.inactive')" :value="false" />
+      </el-select>
+    </ListToolbar>
+
     <el-empty v-if="!loading && !rows.length" :description="t('pricing.empty')" />
     <el-table v-else :data="rows" v-loading="loading" stripe>
       <el-table-column :label="t('pricing.service')" min-width="140">
@@ -35,6 +67,14 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
 
     <el-dialog v-model="dialog" :title="editing ? t('pricing.editRule') : t('pricing.addRule')" width="480px">
       <el-form label-position="top">
@@ -69,8 +109,10 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createPricingRule, deletePricingRule, listPricingRules, updatePricingRule } from '../api/pricing'
-import { listSteps } from '../api/workflows'
-import { listWorkflows } from '../api/workflows'
+import { listSteps, listWorkflows } from '../api/workflows'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
 import { useAuthStore } from '../store/auth'
 import { stepLabel } from '../utils/labels'
 
@@ -82,24 +124,18 @@ function ruleTypeLabel(type) {
   const translated = t(key)
   return translated === key ? type : translated
 }
-const rows = ref([])
+
 const serviceSteps = ref([])
-const loading = ref(false)
 const dialog = ref(false)
 const editing = ref(null)
 const form = reactive({ step: null, name: '', rule_type: 'per_kg', amount: 0, active: true })
 
-async function load() {
-  loading.value = true
-  try {
-    const data = await listPricingRules()
-    rows.value = data.results || data || []
-  } catch {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listPricingRules, { immediate: false })
+filters.rule_type = ''
+filters.active = ''
 
 async function loadSteps() {
   try {

@@ -8,6 +8,23 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    >
+      <el-select
+        v-model="filters.state"
+        clearable
+        :placeholder="t('common.status')"
+        style="width: 180px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option v-for="s in processStates" :key="s" :label="stateLabel(s)" :value="s" />
+      </el-select>
+    </ListToolbar>
+
     <el-empty :description="t('processing.emptyHint')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
       <el-table-column :label="t('common.order')" width="190">
@@ -43,6 +60,14 @@
       </el-table-column>
     </el-table>
 
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
+
     <el-dialog v-model="liveDialog" :title="liveTitle" width="720px" destroy-on-close @closed="teardownPlayback">
       <p class="hint">{{ t('processing.liveHint') }}</p>
       <div v-if="liveCameras.length > 1" class="cam-pills">
@@ -68,16 +93,27 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { requestStreamAccess, verifyStream } from '../api/monitoring'
 import { executionAction, listExecutions } from '../api/processing'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
 import { statusLabel, stepLabel } from '../utils/labels'
 
 const { t } = useI18n()
-const rows = ref([])
-const loading = ref(false)
+const processStates = [
+  'pending', 'ready', 'in_progress', 'paused', 'waiting',
+  'completed', 'failed', 'rejected', 'skipped', 'cancelled', 'rework_required',
+]
+
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listExecutions, { immediate: true })
+filters.state = ''
 
 const liveDialog = ref(false)
 const liveTitle = ref('')
@@ -92,18 +128,6 @@ const streamError = ref('')
 const iceServers = ref([{ urls: 'stun:stun.l.google.com:19302' }])
 let snapshotTimer = null
 let peer = null
-
-async function load() {
-  loading.value = true
-  try {
-    const data = await listExecutions()
-    rows.value = data.results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
 
 async function run(row, action) {
   try {
@@ -261,7 +285,6 @@ async function playCamera(camera) {
   }
 }
 
-onMounted(load)
 </script>
 
 <style scoped>

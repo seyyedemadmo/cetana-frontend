@@ -11,6 +11,24 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    >
+      <el-select
+        v-model="filters.is_active"
+        clearable
+        :placeholder="t('common.status')"
+        style="width: 160px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option :label="t('users.active')" :value="true" />
+        <el-option :label="t('users.banned')" :value="false" />
+      </el-select>
+    </ListToolbar>
+
     <el-table :data="rows" v-loading="loading" stripe>
       <el-table-column prop="username" :label="t('login.username')" min-width="140" />
       <el-table-column prop="email" :label="t('common.email')" min-width="180" />
@@ -36,6 +54,14 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
 
     <el-dialog v-model="dialog" :title="editing ? t('users.editUser') : t('users.newUser')" width="520px">
       <el-form label-position="top">
@@ -75,17 +101,24 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createUser, deleteUser, listRoles, listUsers, setUserPassword, updateUser } from '../api/users'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
 
 const { t } = useI18n()
-const rows = ref([])
 const roles = ref([])
-const loading = ref(false)
 const dialog = ref(false)
 const editing = ref(false)
 const currentId = ref(null)
 const pwDialog = ref(false)
 const newPassword = ref('')
 const pwUserId = ref(null)
+
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listUsers, { immediate: false })
+filters.is_active = ''
 
 const form = reactive({
   username: '', first_name: '', last_name: '', email: '', phone: '',
@@ -101,20 +134,9 @@ function reset() {
   })
 }
 
-async function load() {
-  loading.value = true
-  try {
-    rows.value = (await listUsers()).results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
 async function loadRoles() {
   try {
-    roles.value = (await listRoles()).results || []
+    roles.value = (await listRoles({ page_size: 200 })).results || []
   } catch (e) {
     roles.value = []
   }

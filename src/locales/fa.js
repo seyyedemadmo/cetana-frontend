@@ -48,6 +48,7 @@ export default {
     email: 'ایمیل',
     phone: 'تلفن',
     active: 'فعال',
+    inactive: 'غیرفعال',
     banned: 'مسدود',
     ban: 'مسدود',
     unban: 'رفع مسدودیت',
@@ -69,7 +70,12 @@ export default {
     theme: 'پوسته',
     myProfile: 'پروفایل من',
     operationFailed: 'عملیات ناموفق بود',
-    connectionFailed: 'اتصال ناموفق: {error}'
+    connectionFailed: 'اتصال ناموفق: {error}',
+    filter: 'فیلتر',
+    resetFilters: 'بازنشانی',
+    searchPlaceholder: 'جستجو…',
+    reservation: 'رزرو',
+    pageSize: 'در هر صفحه'
   },
   btn: {
     start: 'شروع',
@@ -202,6 +208,8 @@ export default {
     newOrder: 'سفارش جدید',
     newOrderHint: 'یک نوبت تاییدشده را برای شروع سفارش انتخاب کنید.',
     selectReservation: 'انتخاب رزرو',
+    filterByReservation: 'فیلتر بر اساس رزرو',
+    reservation: 'رزرو',
     stepWeigh: 'وزن‌کشی',
     weighHint: 'وزن ناخالص و ظرف را وارد کنید. وزن خالص خودش حساب می‌شود.',
     saveWeight: 'ذخیره وزن',

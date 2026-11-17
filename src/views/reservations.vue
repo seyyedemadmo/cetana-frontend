@@ -16,6 +16,22 @@
     <el-tabs>
       <!-- RESERVATIONS -->
       <el-tab-pane :label="t('reservations.title')">
+        <ListToolbar
+          v-model:search="search"
+          :search-placeholder="t('common.searchPlaceholder')"
+          @search="onSearchInput"
+        >
+          <el-select
+            v-model="filters.status"
+            clearable
+            :placeholder="t('common.status')"
+            style="width: 180px"
+            @change="onFilterChange"
+          >
+            <el-option :label="t('common.all')" value="" />
+            <el-option v-for="s in reservationStatuses" :key="s" :label="statusLabel(t, s)" :value="s" />
+          </el-select>
+        </ListToolbar>
         <el-table :data="rows" v-loading="loading" stripe>
           <el-table-column prop="title" :label="t('reservations.titleField')" min-width="160">
             <template #default="{ row }">{{ row.title || '—' }}</template>
@@ -43,6 +59,13 @@
             </template>
           </el-table-column>
         </el-table>
+        <ListPagination
+          :total="total"
+          :page="page"
+          :page-size="pageSize"
+          @page-change="onPageChange"
+          @size-change="onSizeChange"
+        />
       </el-tab-pane>
 
       <!-- SLOTS -->
@@ -52,15 +75,45 @@
             <span>{{ t('reservations.autoSlotsHint') }}</span>
           </template>
         </el-alert>
-        <div style="margin-bottom: 12px; text-align: right; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap">
-          <el-button v-if="auth.hasPerm('slot.manage')" @click="doGenerateHorizon" :loading="horizonLoading">
-            {{ t('reservations.generateUpcoming') }}
-          </el-button>
-          <el-button v-if="auth.hasPerm('slot.manage')" type="primary" @click="genDialog = true">
-            <el-icon><Calendar /></el-icon>&nbsp;{{ t('reservations.generateOneDay') }}
-          </el-button>
+        <div style="margin-bottom: 12px; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; align-items: center">
+          <ListToolbar
+            v-model:search="slotSearch"
+            :search-placeholder="t('common.searchPlaceholder')"
+            @search="onSlotSearchInput"
+            style="margin-bottom: 0; flex: 1"
+          >
+            <el-select
+              v-model="slotFilters.facility"
+              clearable
+              filterable
+              :placeholder="t('monitoring.facility')"
+              style="width: 180px"
+              @change="onSlotFilterChange"
+            >
+              <el-option v-for="f in facilities" :key="f.id" :label="f.name" :value="f.id" />
+            </el-select>
+            <el-select
+              v-model="slotFilters.blocked"
+              clearable
+              :placeholder="t('reservations.blocked')"
+              style="width: 140px"
+              @change="onSlotFilterChange"
+            >
+              <el-option :label="t('common.all')" value="" />
+              <el-option :label="boolLabel(t, true)" :value="true" />
+              <el-option :label="boolLabel(t, false)" :value="false" />
+            </el-select>
+          </ListToolbar>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <el-button v-if="auth.hasPerm('slot.manage')" @click="doGenerateHorizon" :loading="horizonLoading">
+              {{ t('reservations.generateUpcoming') }}
+            </el-button>
+            <el-button v-if="auth.hasPerm('slot.manage')" type="primary" @click="genDialog = true">
+              <el-icon><Calendar /></el-icon>&nbsp;{{ t('reservations.generateOneDay') }}
+            </el-button>
+          </div>
         </div>
-        <el-table :data="slots" v-loading="loading" stripe>
+        <el-table :data="slots" v-loading="slotsLoading" stripe>
           <el-table-column prop="facility_name" :label="t('monitoring.facility')" min-width="150" />
           <el-table-column :label="t('reservations.date')" width="130">
             <template #default="{ row }"><JalaliText :value="row.date" /></template>
@@ -75,16 +128,39 @@
             <template #default="{ row }"><el-tag :type="row.blocked ? 'danger' : 'info'">{{ boolLabel(t, row.blocked) }}</el-tag></template>
           </el-table-column>
         </el-table>
+        <ListPagination
+          :total="slotsTotal"
+          :page="slotsPage"
+          :page-size="slotsPageSize"
+          @page-change="onSlotsPageChange"
+          @size-change="onSlotsSizeChange"
+        />
       </el-tab-pane>
 
       <!-- SCHEDULE -->
       <el-tab-pane :label="t('reservations.addDaySchedule')">
-        <div style="margin-bottom: 12px; text-align: right">
+        <div style="margin-bottom: 12px; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; align-items: center">
+          <ListToolbar
+            v-model:search="schedSearch"
+            :show-search="false"
+            style="margin-bottom: 0; flex: 1"
+          >
+            <el-select
+              v-model="schedFilters.facility"
+              clearable
+              filterable
+              :placeholder="t('monitoring.facility')"
+              style="width: 180px"
+              @change="onSchedFilterChange"
+            >
+              <el-option v-for="f in facilities" :key="f.id" :label="f.name" :value="f.id" />
+            </el-select>
+          </ListToolbar>
           <el-button v-if="auth.hasPerm('slot.manage')" type="primary" @click="schedDialog = true">
             <el-icon><Plus /></el-icon>&nbsp;{{ t('reservations.addDaySchedule') }}
           </el-button>
         </div>
-        <el-table :data="schedules" v-loading="loading" stripe>
+        <el-table :data="schedules" v-loading="schedLoading" stripe>
           <el-table-column prop="facility_name" :label="t('monitoring.facility')" min-width="150" />
           <el-table-column :label="t('reservations.date')" width="130">
             <template #default="{ row }"><JalaliText :value="row.date" /></template>
@@ -102,6 +178,13 @@
             </template>
           </el-table-column>
         </el-table>
+        <ListPagination
+          :total="schedTotal"
+          :page="schedPage"
+          :page-size="schedPageSize"
+          @page-change="onSchedPageChange"
+          @size-change="onSchedSizeChange"
+        />
       </el-tab-pane>
     </el-tabs>
 
@@ -210,26 +293,52 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '../store/auth'
 import {
   approveReservation, cancelReservation, createReservation, createSchedule, deleteSchedule,
   generateSlotHorizon, generateSlots, listFacilities, listReservations, listSchedules, listSlots,
   rejectReservation
 } from '../api/reservations'
 import { createPayment } from '../api/payments'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
+import { useAuthStore } from '../store/auth'
 import { formatTimeRange } from '../utils/jalali'
 import { boolLabel, openLabel, statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const auth = useAuthStore()
 
-const rows = ref([])
-const slots = ref([])
+const reservationStatuses = [
+  'pending', 'confirmed', 'rejected', 'arrived', 'weighed', 'cancelled', 'expired',
+]
+
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load: loadReservationsList, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listReservations, { immediate: false })
+filters.status = ''
+
+const {
+  rows: slots, loading: slotsLoading, total: slotsTotal, page: slotsPage, pageSize: slotsPageSize,
+  search: slotSearch, filters: slotFilters,
+  load: loadSlotsList, onSearchInput: onSlotSearchInput, onFilterChange: onSlotFilterChange,
+  onPageChange: onSlotsPageChange, onSizeChange: onSlotsSizeChange,
+} = useServerList(listSlots, { immediate: false })
+slotFilters.facility = ''
+slotFilters.blocked = ''
+
+const {
+  rows: schedules, loading: schedLoading, total: schedTotal, page: schedPage, pageSize: schedPageSize,
+  search: schedSearch, filters: schedFilters,
+  load: loadSchedulesList, onFilterChange: onSchedFilterChange,
+  onPageChange: onSchedPageChange, onSizeChange: onSchedSizeChange,
+} = useServerList(listSchedules, { immediate: false })
+schedFilters.facility = ''
+
 const daySlots = ref([])
 const daySlotsLoading = ref(false)
 const facilities = ref([])
-const schedules = ref([])
-const loading = ref(false)
 
 const newDialog = ref(false)
 const form = reactive({ title: '', date: '', slot: null })
@@ -249,16 +358,7 @@ const schedForm = reactive({ facility: null, date: '', is_open: true, capacity: 
 const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function load() {
-  loading.value = true
-  try {
-    rows.value = (await listReservations()).results || []
-    slots.value = (await listSlots()).results || []
-    schedules.value = (await listSchedules()).results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
+  await Promise.all([loadReservationsList(), loadSlotsList(), loadSchedulesList()])
 }
 
 async function loadFacilities() {

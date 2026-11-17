@@ -48,6 +48,7 @@ export default {
     email: 'Email',
     phone: 'Phone',
     active: 'Active',
+    inactive: 'Inactive',
     banned: 'Banned',
     ban: 'Ban',
     unban: 'Unban',
@@ -69,7 +70,12 @@ export default {
     theme: 'Theme',
     myProfile: 'My profile',
     operationFailed: 'Operation failed',
-    connectionFailed: 'Connection failed: {error}'
+    connectionFailed: 'Connection failed: {error}',
+    filter: 'Filter',
+    resetFilters: 'Reset',
+    searchPlaceholder: 'Search…',
+    reservation: 'Reservation',
+    pageSize: 'Per page'
   },
   btn: {
     start: 'Start',
@@ -202,6 +208,8 @@ export default {
     newOrder: 'New order',
     newOrderHint: 'Pick a confirmed reservation to start an order.',
     selectReservation: 'Select a reservation',
+    filterByReservation: 'Filter by reservation',
+    reservation: 'Reservation',
     stepWeigh: 'Weigh',
     weighHint: 'Enter gross and tare weight. Net weight is calculated for you.',
     saveWeight: 'Save weight',

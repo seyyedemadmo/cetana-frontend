@@ -11,6 +11,26 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    >
+      <el-select
+        v-model="filters.status"
+        clearable
+        :placeholder="t('common.status')"
+        style="width: 160px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option value="active" :label="statusLabel(t, 'active')" />
+        <el-option value="draft" :label="statusLabel(t, 'draft')" />
+        <el-option value="inactive" :label="statusLabel(t, 'inactive')" />
+        <el-option value="archived" :label="statusLabel(t, 'archived')" />
+      </el-select>
+    </ListToolbar>
+
     <el-table :data="rows" v-loading="loading" stripe>
       <el-table-column prop="name" :label="t('common.name')" min-width="180" />
       <el-table-column prop="slug" :label="t('common.slug')" width="200" />
@@ -24,33 +44,35 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '../store/auth'
 import { listWorkflows, publishWorkflow } from '../api/workflows'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
+import { useAuthStore } from '../store/auth'
 import { statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const auth = useAuthStore()
-const rows = ref([])
-const loading = ref(false)
 
-async function refresh() {
-  loading.value = true
-  try {
-    const data = await listWorkflows()
-    rows.value = data.results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load: refresh, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listWorkflows)
+filters.status = ''
 
 async function publish(row) {
   try {
@@ -61,8 +83,6 @@ async function publish(row) {
     ElMessage.error(e.response?.data?.error?.message || t('workflows.publish'))
   }
 }
-
-onMounted(refresh)
 </script>
 
 <style scoped>

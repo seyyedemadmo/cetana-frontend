@@ -11,6 +11,12 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    />
+
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
       <el-table-column prop="order_number" :label="t('common.order')" width="180" />
@@ -24,6 +30,14 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
 
     <el-dialog v-model="genDialog" :title="t('reports.generateReport')" width="460px">
       <el-select v-model="genOrder" filterable :placeholder="t('reports.selectOrder')" style="width: 100%">
@@ -43,31 +57,25 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { downloadReportPdf, generateReport, listFinalReports } from '../api/reports'
 import { listOrders } from '../api/orders'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
 
 const { t } = useI18n()
-const rows = ref([])
 const orders = ref([])
-const loading = ref(false)
 const genDialog = ref(false)
 const genOrder = ref(null)
 
-const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
+const {
+  rows, loading, total, page, pageSize, search,
+  load, onSearchInput, onPageChange, onSizeChange,
+} = useServerList(listFinalReports, { immediate: false })
 
-async function load() {
-  loading.value = true
-  try {
-    const data = await listFinalReports()
-    rows.value = data.results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function loadOrders() {
   try {
-    const data = await listOrders()
+    const data = await listOrders({ page_size: 200 })
     orders.value = data.results || []
   } catch (e) {
     orders.value = []

@@ -11,6 +11,23 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    >
+      <el-select
+        v-model="filters.sync_state"
+        clearable
+        :placeholder="t('invoices.syncState')"
+        style="width: 180px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option v-for="s in syncStates" :key="s" :label="statusLabel(t, s)" :value="s" />
+      </el-select>
+    </ListToolbar>
+
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
       <el-table-column prop="number" :label="t('common.number')" width="220" />
@@ -35,6 +52,14 @@
       </el-table-column>
     </el-table>
 
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
+
     <el-dialog v-model="dialog" :title="t('invoices.newInvoice')" width="460px">
       <el-select v-model="form.order" filterable :placeholder="t('invoices.selectOrder')" style="width: 100%">
         <el-option v-for="o in orders" :key="o.id" :label="`${o.order_number} · ${o.price_snapshot?.total || '—'}`" :value="o.id" />
@@ -53,32 +78,28 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createInvoice, listInvoices, syncInvoice } from '../api/invoices'
 import { listOrders } from '../api/orders'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
 import { statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
-const rows = ref([])
+const syncStates = ['pending', 'processing', 'synchronized', 'failed']
 const orders = ref([])
-const loading = ref(false)
 const dialog = ref(false)
 const form = reactive({ order: null })
 
-const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listInvoices, { immediate: false })
+filters.sync_state = ''
 
-async function load() {
-  loading.value = true
-  try {
-    const data = await listInvoices()
-    rows.value = data.results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function loadOrders() {
   try {
-    const data = await listOrders()
+    const data = await listOrders({ page_size: 200 })
     orders.value = data.results || []
   } catch (e) {
     orders.value = []

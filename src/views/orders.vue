@@ -13,9 +13,39 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    >
+      <el-select
+        v-model="filters.status"
+        clearable
+        :placeholder="t('common.status')"
+        style="width: 180px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option v-for="s in orderStatuses" :key="s" :label="orderStatusLabel(s)" :value="s" />
+      </el-select>
+      <el-select
+        v-model="filters.reservation"
+        clearable
+        filterable
+        :placeholder="t('orders.filterByReservation')"
+        style="width: 260px"
+        @change="onFilterChange"
+      >
+        <el-option v-for="r in allReservations" :key="r.id" :label="reservationLabel(r)" :value="r.id" />
+      </el-select>
+    </ListToolbar>
+
     <el-empty :description="t('orders.emptyHint')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
       <el-table-column prop="order_number" :label="t('common.order')" width="180" />
+      <el-table-column :label="t('orders.reservation')" min-width="200">
+        <template #default="{ row }">{{ orderReservationLabel(row) }}</template>
+      </el-table-column>
       <el-table-column prop="status" :label="t('common.status')" width="160">
         <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ orderStatusLabel(row.status) }}</el-tag></template>
       </el-table-column>
@@ -50,10 +80,18 @@
       </el-table-column>
     </el-table>
 
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
+
     <el-dialog v-model="newDialog" :title="t('orders.newOrder')" width="480px">
       <p class="hint">{{ t('orders.newOrderHint') }}</p>
       <el-select v-model="newReservation" :placeholder="t('orders.selectReservation')" style="width: 100%">
-        <el-option v-for="r in reservations" :key="r.id" :label="reservationLabel(r)" :value="r.id" />
+        <el-option v-for="r in bookableReservations" :key="r.id" :label="reservationLabel(r)" :value="r.id" />
       </el-select>
       <template #footer>
         <el-button @click="newDialog = false">{{ t('common.cancel') }}</el-button>
@@ -106,24 +144,49 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { confirmOrder, createOrder, listOrders, selectSteps, weighOrder } from '../api/orders'
 import { listReservations } from '../api/reservations'
 import { listSteps } from '../api/workflows'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
 import { useAuthStore } from '../store/auth'
 import { formatJalaliDate, formatTime } from '../utils/jalali'
 import { statusLabel, stepLabel } from '../utils/labels'
 
 const { t } = useI18n()
 const auth = useAuthStore()
-const rows = ref([])
-const reservations = ref([])
-const loading = ref(false)
+
+const orderStatuses = ['draft', 'awaiting_confirmation', 'confirmed', 'processing', 'completed', 'cancelled']
+
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listOrders, { immediate: false })
+
+filters.status = ''
+filters.reservation = ''
+
+const allReservations = ref([])
+const bookableReservations = computed(() =>
+  allReservations.value.filter((r) => ['confirmed', 'arrived', 'weighed'].includes(r.status))
+)
 
 function reservationLabel(r) {
-  return `${formatJalaliDate(r.slot?.date) || '—'} ${formatTime(r.slot?.start_time) || '—'} · ${statusLabel(t, r.status)}`
+  const title = r.title ? `${r.title} · ` : ''
+  return `${title}${formatJalaliDate(r.slot?.date) || '—'} ${formatTime(r.slot?.start_time) || '—'} · ${statusLabel(t, r.status)}`
+}
+
+function orderReservationLabel(row) {
+  if (!row.reservation) return '—'
+  const title = row.reservation_title || ''
+  const date = formatJalaliDate(row.reservation_slot_date) || ''
+  const time = formatTime(row.reservation_slot_start) || ''
+  const parts = [title, `${date} ${time}`.trim()].filter(Boolean)
+  return parts.join(' · ') || '—'
 }
 
 const newDialog = ref(false)
@@ -138,24 +201,12 @@ const currentOrder = ref(null)
 
 const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
-async function load() {
-  loading.value = true
-  try {
-    const data = await listOrders()
-    rows.value = data.results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
 async function loadReservations() {
   try {
-    const data = await listReservations()
-    reservations.value = (data.results || []).filter((r) => r.status === 'confirmed' || r.status === 'arrived' || r.status === 'weighed')
-  } catch (e) {
-    reservations.value = []
+    const data = await listReservations({ page_size: 200 })
+    allReservations.value = data.results || []
+  } catch {
+    allReservations.value = []
   }
 }
 
@@ -197,7 +248,7 @@ async function openSelect(row) {
     const data = await listSteps(row.workflow_version, { kind: 'service' })
     steps.value = data.results || []
     selectedKeys.value = steps.value.filter((s) => s.required).map((s) => s.key)
-  } catch (e) {
+  } catch {
     steps.value = []
   }
   selectDialog.value = true

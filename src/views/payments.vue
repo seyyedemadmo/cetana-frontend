@@ -11,6 +11,23 @@
       </template>
     </el-alert>
 
+    <ListToolbar
+      v-model:search="search"
+      :search-placeholder="t('common.searchPlaceholder')"
+      @search="onSearchInput"
+    >
+      <el-select
+        v-model="filters.status"
+        clearable
+        :placeholder="t('common.status')"
+        style="width: 160px"
+        @change="onFilterChange"
+      >
+        <el-option :label="t('common.all')" value="" />
+        <el-option v-for="s in paymentStatuses" :key="s" :label="statusLabel(t, s)" :value="s" />
+      </el-select>
+    </ListToolbar>
+
     <el-empty :description="t('common.noData')" v-if="!loading && !rows.length" />
     <el-table :data="rows" v-loading="loading" stripe v-else>
       <el-table-column prop="transaction_id" :label="t('payments.transaction')" min-width="180" />
@@ -32,6 +49,14 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <ListPagination
+      :total="total"
+      :page="page"
+      :page-size="pageSize"
+      @page-change="onPageChange"
+      @size-change="onSizeChange"
+    />
 
     <el-dialog v-model="dialog" :title="t('payments.newPayment')" width="460px">
       <el-form label-position="top">
@@ -58,32 +83,28 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createPayment, listPayments, verifyPayment } from '../api/payments'
 import { listOrders } from '../api/orders'
+import ListPagination from '../components/ListPagination.vue'
+import ListToolbar from '../components/ListToolbar.vue'
+import { useServerList } from '../composables/useServerList'
 import { statusLabel } from '../utils/labels'
 
 const { t } = useI18n()
-const rows = ref([])
+const paymentStatuses = ['pending', 'success', 'failed', 'cancelled']
 const orders = ref([])
-const loading = ref(false)
 const dialog = ref(false)
 const form = reactive({ order: null, amount: 0 })
 
-const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
+const {
+  rows, loading, total, page, pageSize, search, filters,
+  load, onSearchInput, onFilterChange, onPageChange, onSizeChange,
+} = useServerList(listPayments, { immediate: false })
+filters.status = ''
 
-async function load() {
-  loading.value = true
-  try {
-    const data = await listPayments()
-    rows.value = data.results || []
-  } catch (e) {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
+const errMsg = (e) => e.response?.data?.error?.message || t('common.operationFailed')
 
 async function loadOrders() {
   try {
-    const data = await listOrders()
+    const data = await listOrders({ page_size: 200 })
     orders.value = data.results || []
   } catch (e) {
     orders.value = []
